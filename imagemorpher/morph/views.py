@@ -31,11 +31,13 @@ def index(request):
         # img1 = skio.imread(formData['Image-1'])
         # img2 = skio.imread(formData['Image-2'])
         # pdb.set_trace() 
-        img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/clooney_fit.jpg')
-        img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_fit.jpg')
+        img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/brady.jpg')
+        img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/manning.jpg')
         morphed_img = morph(img1, img2, 0.5)
         # return Response(morphed_img)
-    except Exception:
-        return Response(Exception)
+    except Exception as e:
+        pdb.set_trace()
+        print(e)
+        return Response(e)
     else:
         return Response('you got this')

@@ -51,7 +51,7 @@ def getDetectedCorrespondingPoints(img):
   face_detection_object = predictor(img, face)
   face_points = face_detection_object.parts()
   landmarks = np.array([[p.x, p.y] for p in face_points])
-  pdb.set_trace()
+  #pdb.set_trace()
   landmarks = addCornerPointsOnImg(img, landmarks)
   return landmarks
 
@@ -59,7 +59,7 @@ def getDetectedCorrespondingPoints(img):
 def addCornerPointsOnImg(im1, pts):
   minW, minH = 0, 0
   maxW, maxH = im1.shape[1], im1.shape[0]
-  pdb.set_trace()
+  #pdb.set_trace()
   pts = np.append(pts, np.array([minW, minH]).reshape((1,2)), axis=0)
   pts = np.append(pts, np.array([minW, maxH]).reshape((1,2)), axis=0)
   pts = np.append(pts, np.array([maxW, minH]).reshape((1,2)), axis=0)
@@ -97,9 +97,9 @@ def getHomoPt(pt):
   pt = pt.reshape(2, 1)
   return np.pad(pt, ((0, 1), (0, 0)), mode='constant', constant_values=1)
 
-def shouldClipPixel(img_shape, px, py, px2, py2):
+def shouldClipPixel(img_shape, px, py):
   w, h = img_shape[1]-1, img_shape[0] - 1
-  if (px > w or px2 > w or py > h or py2 > h):
+  if (px > w or py > h):
     return True
   return False
 
@@ -129,6 +129,7 @@ def fillNonTrianglePixels(im1, im2, new_im, tri_dict, alpha):
 
 def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
   morphed_im = np.zeros(src_img.shape, dtype=np.uint8)
+  # pdb.set_trace()
   for i, triangle in enumerate(tri.simplices):
       for p in tri_dict[i]:
         b = getHomoPt(p)
@@ -139,8 +140,9 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
         pixel_x2 = int(np.around(x2[0]))
         pixel_y2 = int(np.around(x2[1]))
 
-        #if (shouldClipPixel(src_img.shape, pixel_x, pixel_y, pixel_x2, pixel_y2)):
-        #  continue
+        #may not be needed
+        if (shouldClipPixel(src_img.shape, pixel_x, pixel_y) or shouldClipPixel(dest_img.shape, pixel_x2, pixel_y2)):
+          continue
 
         color1 = src_img[pixel_y][pixel_x]
         color2 = dest_img[pixel_y2][pixel_x2]
@@ -183,6 +185,8 @@ def morph(img1, img2, t):
   # img1_name_TEMP = 'adele_small'
   # img2_name_TEMP = 'tiger_small'
   start = time.time()
+
+  # pdb.set_trace()
 
   # images = getImages()
   # img1 = images[img1_name]
