@@ -27,21 +27,10 @@ how do we create a morphing sequence?-
 3. Cross-dissolve the colors in the newly warped images
 """
 
-def stopWatch(value):
+def stopWatch(value, message="useless"):
     '''From seconds to Days;Hours:Minutes;Seconds'''
 
-    valueD = (((value/365)/24)/60)
-    Days = int (valueD)
-
-    valueH = (valueD-Days)*365
-    Hours = int(valueH)
-
-    valueM = (valueH - Hours)*24
-    Minutes = int(valueM)
-
-    valueS = (valueM - Minutes)*60
-    Seconds = int(valueS)
-    print("Seconds: ",Seconds)
+    print(message + " took seconds: ", int(value))
 
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
@@ -127,27 +116,64 @@ def fillNonTrianglePixels(im1, im2, new_im, tri_dict, alpha):
 		new_im[y][x] = (1-alpha) * color1 + alpha * color2
 	return new_im
 
+global morphed_im
+global source_image
+global destination_image
+global morph_amount
+
 def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
+  global morphed_im
   morphed_im = np.zeros(src_img.shape, dtype=np.uint8)
-  # pdb.set_trace()
-  for i, triangle in enumerate(tri.simplices):
-      for p in tri_dict[i]:
-        b = getHomoPt(p)
-        x = np.dot(T1_inv[i], b)
-        x2 = np.dot(T2_inv[i], b)
-        pixel_x = int(np.around(x[0]))  # round rather than interpolate for now
-        pixel_y = int(np.around(x[1]))
-        pixel_x2 = int(np.around(x2[0]))
-        pixel_y2 = int(np.around(x2[1]))
+  global source_image
+  global destination_image
+  global morph_amount
+  morph_amount = t
+  source_image = src_img
+  destination_image = dest_img
 
-        #may not be needed
-        if (shouldClipPixel(src_img.shape, pixel_x, pixel_y) or shouldClipPixel(dest_img.shape, pixel_x2, pixel_y2)):
-          continue
+  [getDestinationPixel(p, T1_inv[i], T2_inv[i]) for i, triangle in enumerate(tri.simplices) for p in tri_dict[i]]
+ # for i, triangle in enumerate(tri.simplices):
+   # [getDestinationPixel(p, T1_inv[i], T2_inv[i]) for p in tri_dict[i]]
+      # for p in tri_dict[i]:
+      #   b = getHomoPt(p)
+      #   x = np.dot(T1_inv[i], b)
+      #   x2 = np.dot(T2_inv[i], b)
+      #   pixel_x = int(np.around(x[0]))  # round rather than interpolate for now
+      #   pixel_y = int(np.around(x[1]))
+      #   pixel_x2 = int(np.around(x2[0]))
+      #   pixel_y2 = int(np.around(x2[1]))
 
-        color1 = src_img[pixel_y][pixel_x]
-        color2 = dest_img[pixel_y2][pixel_x2]
-        morphed_im[p[1]][p[0]] = crossDisolve(color1, color2, t)
+      #   #may not be needed
+      #   if (shouldClipPixel(src_img.shape, pixel_x, pixel_y) or shouldClipPixel(dest_img.shape, pixel_x2, pixel_y2)):
+      #     continue
+ 
+      #   color1 = src_img[pixel_y][pixel_x]
+      #   color2 = dest_img[pixel_y2][pixel_x2]
+      #   morphed_im[p[1]][p[0]] = crossDisolve(color1, color2, t)
   return morphed_im
+
+def getDestinationPixel(pixel, T1_inv, T2_inv):
+  b = getHomoPt(pixel)
+  x = np.dot(T1_inv, b)
+  x2 = np.dot(T2_inv, b)
+  pixel_x = int(np.around(x[0]))  # round rather than interpolate for now
+  pixel_y = int(np.around(x[1]))
+  pixel_x2 = int(np.around(x2[0]))
+  pixel_y2 = int(np.around(x2[1]))
+
+  global source_image
+  global destination_image
+
+  if (shouldClipPixel(source_image.shape, pixel_x, pixel_y) or shouldClipPixel(destination_image.shape, pixel_x2, pixel_y2)):
+    return
+
+  color1 = source_image[pixel_y][pixel_x]
+  color2 = destination_image[pixel_y2][pixel_x2]
+  
+  global morphed_im
+  global morph_amount
+
+  morphed_im[pixel[1]][pixel[0]] = crossDisolve(color1, color2, morph_amount)
 
 def getInverseTransformationDictionary(src_pts, triangulations):
   T_inv_transforms = []
@@ -200,10 +226,14 @@ def morph(img1, img2, t):
 
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
   midpoint_tesselation = Delaunay(midPoints)
-  tri_to_point_dict = getTriPoints(img1, midpoint_tesselation)
 
   end = time.time()
-  stopWatch(end-start) # Measure time to map each pixel to a triangle
+  stopWatch(end-start, "Point + Triangulation") # Measure time to map each pixel to a triangle
+
+  tempStart = time.time()
+  tri_to_point_dict = getTriPoints(img1, midpoint_tesselation)
+  tempEnd = time.time()
+  stopWatch(tempEnd - tempStart, "tri_to_point")
 
   start = time.time()
 
@@ -215,12 +245,15 @@ def morph(img1, img2, t):
   T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
 
   end = time.time()
-  stopWatch(end-start) # Measure time to map each triangle's transformation matrix M
+  stopWatch(end-start, "inverse transformation dictionary") # Measure time to map each triangle's transformation matrix M
   start = time.time()
 
   morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
+
+  # morphed_im = crop_image_blacked_rows(morphed_im)
+
   end = time.time()
-  stopWatch(end-start) # Measure time to map morphing two images at time t
+  stopWatch(end-start, "Getting morphed image") # Measure time to map morphing two images at time t
 
   # imsave('morph/' + str(t * 100) + '.png' , morphed_im)
   imageio.imwrite('morphed_im2.jpg', morphed_im)
@@ -236,6 +269,15 @@ def getMorphSequence(img1_name, img2_name, t_step):
     morph(img1_name, img2_name, t)
     t += t_step
   return "Morph sequence is complete"
+
+def crop_image_blacked_rows(img,tol=0):
+  # img is 2D or 3D image data
+  # tol  is tolerance
+  mask = img>tol
+  if img.ndim==3:
+      mask = mask.all(2)
+  mask0,mask1 = mask.any(0),mask.any(1)
+  return img[np.ix_(mask0,mask1)]
 
 # graphics.plotImg(morphed_im)
 # pdb.set_trace()

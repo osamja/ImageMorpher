@@ -14,6 +14,7 @@ import json
 import pdb
 import skimage.io as skio
 from .main_morph import morph
+import base64
 
 @api_view(["POST"])
 def IdealWeight(heightdata):
@@ -26,18 +27,11 @@ def IdealWeight(heightdata):
 
 @api_view(["POST"])
 def index(request):
-    try:
-        formData = request.FILES
-        # img1 = skio.imread(formData['Image-1'])
-        # img2 = skio.imread(formData['Image-2'])
-        # pdb.set_trace() 
-        img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/brady.jpg')
-        img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/manning.jpg')
-        morphed_img = morph(img1, img2, 0.5)
-        # return Response(morphed_img)
-    except Exception as e:
-        pdb.set_trace()
-        print(e)
-        return Response(e)
-    else:
-        return Response('you got this')
+    formData = request.FILES
+    # img1 = skio.imread(formData['Image-1'])
+    # img2 = skio.imread(formData['Image-2'])
+    img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
+    img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
+    morphed_img = morph(img1, img2, 0.5)
+    encodedImg = base64.b64encode(img1)
+    return Response("Hello")
