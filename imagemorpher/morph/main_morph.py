@@ -8,6 +8,7 @@ import time
 import imageio
 import dlib
 import pdb
+import datetime
 
 """
 Image Morphing
@@ -176,5 +177,6 @@ def morph(img1, img2, t):
   T1_inv_dict = getInverseTransformationDictionary(img1_affine_pts, midpoint_tesselation)
   T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
   morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
-  imageio.imwrite('morph/main_morph.jpg', morphed_im)
-  return morphed_im
+  morphed_img_path = 'morph/temp_morphed_images/' + str(datetime.datetime.now()) + '.jpg'
+  imageio.imwrite(morphed_img_path, morphed_im)
+  return morphed_img_path

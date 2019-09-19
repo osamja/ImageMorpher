@@ -4,5 +4,5 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('weight',views.IdealWeight),
+    path('temp_morphed_images/*', views.getMorphedImage, name='getMorphedImage'),
 ]

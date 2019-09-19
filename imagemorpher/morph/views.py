@@ -18,16 +18,6 @@ import base64
 import io
 from PIL import Image
 
-
-@api_view(["POST"])
-def IdealWeight(heightdata):
-    try:
-        height=json.loads(heightdata.body)
-        weight=str(height*10)
-        return JsonResponse("Ideal weight should be:"+weight+" kg",safe=False)
-    except ValueError as e:
-        return Response(e.args[0],status.HTTP_400_BAD_REQUEST)
-
 @api_view(["POST"])
 def index(request):
     formData = request.FILES
@@ -36,13 +26,14 @@ def index(request):
     img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
     
-    # pdb.set_trace()
-    
-    byteImg = img1.tobytes()
-    base64img = base64.b64encode(img1)
-    sentImg = byteImg
-    return HttpResponse(img1)
-    
-    morphed_img = morph(img1, img2, 0.5)
-    encodedImg = base64.b64encode(img1)
-    return Response("Hello")
+    morphed_img_path = morph(img1, img2, 0.5)
+    try:
+        return Response(morphed_img_path)
+    except IOError:
+        raise
+        return Response('error bro')
+    return Response("Hello", content_type="image/jpeg")
+
+@api_view(["GET"])
+def getMorphedImage(request):
+    return Response('get morphed image')
