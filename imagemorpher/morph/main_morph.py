@@ -9,6 +9,7 @@ import imageio
 import dlib
 import pdb
 import datetime
+import uuid
 
 """
 Image Morphing
@@ -163,10 +164,15 @@ def crop_image_blacked_rows(img,tol=0):
   mask0,mask1 = mask.any(0),mask.any(1)
   return img[np.ix_(mask0,mask1)]
 
+def getMorphedImgUri():
+  random_path = uuid.uuid4()
+  return random_path.hex
+
 def morph(img1, img2, t):
   """'
   Create morph from img1 to img2 at time t
   """
+  static_base_url = 'http://sammyjaved.com:8080'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
@@ -177,6 +183,8 @@ def morph(img1, img2, t):
   T1_inv_dict = getInverseTransformationDictionary(img1_affine_pts, midpoint_tesselation)
   T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
   morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
-  morphed_img_path = 'morph/temp_morphed_images/' + str(datetime.datetime.now()) + '.jpg'
+  img_filename = getMorphedImgUri() + '.jpg'
+  morphed_img_path = 'morph/temp_morphed_images/' + img_filename
+  morphed_img_uri = static_base_url + '/' + img_filename
   imageio.imwrite(morphed_img_path, morphed_im)
-  return morphed_img_path
+  return morphed_img_uri

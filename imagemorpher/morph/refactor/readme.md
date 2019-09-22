@@ -55,17 +55,3 @@ Jaw
  * Left jaw
  * Right jaw
 
-
-## Product Vision
-* MVP
-  - Upload two pictures in web browser, same resolution
-  - Manually pick corresponding points on the UI
-  - Return the 'midway' image to the user
-
-## Product development journal
-Awesome to see getting the refactored morph working
-Setup basic Django backend REST endpoint /morph
-Build the frontend with React to allow for image uploads
-Find out how to read the images in by Python/Django
-Find out how to get auto-generated facial landmark corresponding points using dlib library
-Find out how to use pixel cropping to detect and delete black parts of the image (morph is smaller than image base layer)

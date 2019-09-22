@@ -21,14 +21,16 @@ from PIL import Image
 @api_view(["POST"])
 def index(request):
     formData = request.FILES
-    # img1 = skio.imread(formData['Image-1'])
-    # img2 = skio.imread(formData['Image-2'])
-    img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
-    img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
+    base_url = 'http://sammyjaved.com:8088'
+    img1 = skio.imread(formData['Image-1'])
+    img2 = skio.imread(formData['Image-2'])
+    # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
+    # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
     
-    morphed_img_path = morph(img1, img2, 0.5)
+    morphed_img_uri = morph(img1, img2, 0.5)
     try:
-        return Response(morphed_img_path)
+        # return Response('http://sammyjaved.com:8080/manning_brady.jpg')
+        return Response(morphed_img_uri)
     except IOError:
         raise
         return Response('error bro')
