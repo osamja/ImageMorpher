@@ -18,10 +18,26 @@ import base64
 import io
 from PIL import Image
 
+def isRequestValid(request, Authorization='ImageMorpherV1'):
+    try:
+        pdb.set_trace()
+        isValidApiKey = request.headers['Authorization'] == Authorization
+        formData = request.FILES
+        isImg1 = formData['Image-1']
+        isImg2 = formData['Image-2']
+        if (isValidApiKey and isImg1 and isImg2):
+            return True
+        return False
+    except:
+        return False
+
+
 @api_view(["POST"])
 def index(request):
+    pdb.set_trace()
+    if not isRequestValid(request):
+        return HttpResponse('Unauthorized', status=401)
     formData = request.FILES
-    base_url = 'http://sammyjaved.com:8088'
     img1 = skio.imread(formData['Image-1'])
     img2 = skio.imread(formData['Image-2'])
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
@@ -29,13 +45,8 @@ def index(request):
     
     morphed_img_uri = morph(img1, img2, 0.5)
     try:
-        # return Response('http://sammyjaved.com:8080/manning_brady.jpg')
         return Response(morphed_img_uri)
     except IOError:
         raise
         return Response('error bro')
-    return Response("Hello", content_type="image/jpeg")
-
-@api_view(["GET"])
-def getMorphedImage(request):
-    return Response('get morphed image')
+    return Response('wut wut')
