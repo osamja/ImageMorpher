@@ -10,6 +10,9 @@ import dlib
 import pdb
 import datetime
 import uuid
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 """
 Image Morphing
@@ -172,7 +175,7 @@ def morph(img1, img2, t):
   """'
   Create morph from img1 to img2 at time t
   """
-  static_base_url = 'http://sammyjaved.com:8080'
+  static_base_url = os.getenv("NGINX_STATIC_CONTENT_URL") #'http://sammyjaved.com:8080'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets

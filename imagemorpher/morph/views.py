@@ -34,7 +34,6 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
 
 @api_view(["POST"])
 def index(request):
-    # pdb.set_trace()
 
     # return Response('https://www.sccgov.org/sites/parks/parkfinder/PublishingImages/StoryMap/JDGrant.jpg');
 
