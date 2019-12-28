@@ -28,7 +28,7 @@ def stopWatch(value, message="useless"):
 
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
-  predictor = dlib.shape_predictor('/home/sammy/development/ImageMorpher/imagemorpher/morph/shape_predictor_68_face_landmarks.dat')
+  predictor = dlib.shape_predictor('/app/imagemorpher/morph/shape_predictor_68_face_landmarks.dat')
   face = detector(img, 1)[0]      # get first face
   face_detection_object = predictor(img, face)
   face_points = face_detection_object.parts()

@@ -1,4 +1,5 @@
 *.pyc
+.env
 imagemorpher/morph/images/
 imagemorpher/morph/temp_morphed_images/
 node_modules/
