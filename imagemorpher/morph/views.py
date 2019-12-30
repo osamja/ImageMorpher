@@ -20,7 +20,6 @@ from PIL import Image
 
 def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:
-        # pdb.set_trace()
         isValidApiKey = request.headers['Authorization'] == Authorization
         formData = request.FILES
         isImg1 = formData['Image-1']
@@ -31,12 +30,8 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
     except:
         return False
 
-
 @api_view(["POST"])
 def index(request):
-
-    # return Response('https://www.sccgov.org/sites/parks/parkfinder/PublishingImages/StoryMap/JDGrant.jpg');
-
     if not isRequestValid(request):
         return HttpResponse('Unauthorized', status=401)
     formData = request.FILES
@@ -52,3 +47,7 @@ def index(request):
         raise
         return Response('error bro')
     return Response('wut wut')
+
+@api_view(["GET"])
+def getIndex(request):
+    return Response('GET /morph')
