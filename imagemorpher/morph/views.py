@@ -17,6 +17,9 @@ from .main_morph import morph
 import base64
 import io
 from PIL import Image
+import logging
+
+logging.basicConfig(filename='morph-app.log', format='%(name)s - %(levelname)s - %(message)s')
 
 def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:
@@ -33,6 +36,7 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
 @api_view(["POST"])
 def index(request):
     if not isRequestValid(request):
+        logging.error('request is not valid')
         return HttpResponse('Unauthorized', status=401)
     formData = request.FILES
     img1 = skio.imread(formData['Image-1'])
@@ -40,7 +44,10 @@ def index(request):
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
     
-    morphed_img_uri = morph(img1, img2, 0.5)
+    try:
+        morphed_img_uri = morph(img1, img2, 0.5)
+    except Exception as e:
+        logging.error('Error %s', exc_info=e)
     try:
         return Response(morphed_img_uri)
     except IOError:

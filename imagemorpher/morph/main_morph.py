@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 import os
 
+import logging
+logging.basicConfig(filename='morph-app-pef.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+
 """
 Image Morphing
 We know how to warp one image into the other, but
@@ -24,7 +27,9 @@ how do we create a morphing sequence?-
 """
 
 def stopWatch(value, message="useless"):
-    print(message + " took seconds: ", int(value))
+    log_message = message + " took seconds ", int(value)
+    logging.info(log_message)
+    print(log_message)
 
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
@@ -114,12 +119,12 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
   for i, triangle in enumerate(tri.simplices):
     for p in tri_dict[i]:
       b = getHomoPt(p)
-      x = np.dot(T1_inv[i], b)
-      x2 = np.dot(T2_inv[i], b)
-      pixel_x = int(np.around(x[0]))  # round rather than interpolate for now
-      pixel_y = int(np.around(x[1]))
-      pixel_x2 = int(np.around(x2[0]))
-      pixel_y2 = int(np.around(x2[1]))
+      warped_src_pixel = np.dot(T1_inv[i], b) # investigate whether this computation can be vectorized (e.g. np.dot(T1_inv, tri_dict))
+      warped_dest_pixel = np.dot(T2_inv[i], b)
+      pixel_x = int(np.around(warped_src_pixel[0]))  # round rather than interpolate for now
+      pixel_y = int(np.around(warped_src_pixel[1]))
+      pixel_x2 = int(np.around(warped_dest_pixel[0]))
+      pixel_y2 = int(np.around(warped_dest_pixel[1]))
 
       #may not be needed
       if (shouldClipPixel(src_img.shape, pixel_x, pixel_y) or shouldClipPixel(dest_img.shape, pixel_x2, pixel_y2)):
@@ -175,17 +180,38 @@ def morph(img1, img2, t):
   """'
   Create morph from img1 to img2 at time t
   """
-  static_base_url = os.getenv("NGINX_STATIC_CONTENT_URL") #'http://sammyjaved.com:8080'
+  
+  start_time = time.time() # timer 1
+  static_base_url = 'https://sammyjaved.com/facemorphs' #os.getenv("NGINX_STATIC_CONTENT_URL") #'http://sammyjaved.com:8080'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
+  end_time = time.time()
+  stopWatch(end_time - start_time, "detecting corresponding points")
+
+  start_time = time.time() # timer 2
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
   midpoint_tesselation = Delaunay(midPoints)
+  end_time = time.time()
+  stopWatch(end_time - start_time, "cross disolve + delaunay")
+
+  start_time = time.time() # timer 3
   tri_to_point_dict = getTriPoints(img1, midpoint_tesselation)
+  end_time = time.time()
+  stopWatch(end_time - start_time, "getTriPoints")
+
+  start_time = time.time() # timer 4
   img1_affine_pts = np.vstack((img1_corresponding_pts.T, np.ones(img1_corresponding_pts.T.shape[1])))# Add 1 to each coordinate pair for affine transformation
   img2_affine_pts = np.vstack((img2_corresponding_pts.T, np.ones(img2_corresponding_pts.T.shape[1])))
   T1_inv_dict = getInverseTransformationDictionary(img1_affine_pts, midpoint_tesselation)
   T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
+  end_time = time.time()
+  stopWatch(end_time - start_time, "getInverseTransformationDictionary")
+
+  start_time = time.time() # timer 5
   morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
+  end_time = time.time()
+  stopWatch(end_time - start_time, "getMorphedImg")
+
   img_filename = getMorphedImgUri() + '.jpg'
   morphed_img_path = 'morph/temp_morphed_images/' + img_filename
   morphed_img_uri = static_base_url + '/' + img_filename

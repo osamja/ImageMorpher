@@ -2,6 +2,7 @@
 # Elegantly activating a virtualenv in a Dockerfile https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
 # Python 2.7 + dlib: https://hub.docker.com/r/cameronmaske/dlib/dockerfile
 # django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
+# gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
 
 # BUILD IMAGE: [use SCREEN FIRST!]: docker build -t face-morpher-api:dev -f Dockerfile .
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:dev 
