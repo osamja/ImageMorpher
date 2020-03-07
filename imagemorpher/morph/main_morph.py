@@ -15,7 +15,7 @@ load_dotenv()
 import os
 
 import logging
-logging.basicConfig(filename='morph-app-pef.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='logs/morph-app-pef.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
 
 """
 Image Morphing

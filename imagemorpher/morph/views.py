@@ -19,7 +19,7 @@ import io
 from PIL import Image
 import logging
 
-logging.basicConfig(filename='morph-app.log', format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='logs/morph-app.log', format='%(name)s - %(levelname)s - %(message)s')
 
 def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:

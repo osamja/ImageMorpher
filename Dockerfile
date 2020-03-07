@@ -6,7 +6,8 @@
 
 # BUILD IMAGE: [use SCREEN FIRST!]: docker build -t face-morpher-api:dev -f Dockerfile .
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:dev 
-# SHELL: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher/imagemorpher/morph/temp_morphed_images:/app/imagemorpher/morph/temp_morphed_images face-morpher-api:dev bash
+# SHELL: docker container run -it -p 8088:8088 
+#   -v /home/sammy/ImageMorpher/imagemorpher/morph/temp_morphed_images:/app/imagemorpher/morph/temp_morphed_images face-morpher-api:dev bash
 #  docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher/imagemorpher:/app/imagemorpher/ face-morpher-api:dev bash
 
 FROM ubuntu:18.04
@@ -54,4 +55,4 @@ WORKDIR /app/imagemorpher/
 
 # CMD ["python", "manage.py", "runserver", PORT_NUM]
 # CMD python manage.py runserver 0:8088
-# python manage.py runserver 0:8088
+# python manage.py runserver 0:8088 # development server
