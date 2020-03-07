@@ -19,8 +19,12 @@ ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-COPY . /app
+# create directories needed beforehand
+RUN mkdir -p /app/imageimagemorpher
+
 WORKDIR /app
+
+COPY requirements.txt .
 
 # this command was primarily copied for cmake
 RUN apt-get update && apt-get install -y \

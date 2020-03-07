@@ -13,7 +13,7 @@ from django.utils.html import escape
 import json
 import pdb
 import skimage.io as skio
-from .main_morph import morph
+from .morph import morph
 import base64
 import io
 from PIL import Image

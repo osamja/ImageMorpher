@@ -182,7 +182,7 @@ def morph(img1, img2, t):
   """
   
   start_time = time.time() # timer 1
-  static_base_url = 'https://sammyjaved.com/facemorphs' #os.getenv("NGINX_STATIC_CONTENT_URL") #'http://sammyjaved.com:8080'
+  static_base_url = 'https://sammyjaved.com/facemorphs'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
   end_time = time.time()
