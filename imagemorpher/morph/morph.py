@@ -1,8 +1,8 @@
 import skimage as sk
 import numpy as np
-from .graphics import plotTri, plotImg, plotCorrespondingPoints, plotDelauneyTesselation
+from utils.graphics import plotTri, plotImg, plotCorrespondingPoints, plotDelauneyTesselation
 import matplotlib.pyplot as plt
-from .image_sources import getImages, getCorrespondingPts, addCornerPoints
+from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints
 from scipy.spatial import Delaunay
 import time
 import imageio

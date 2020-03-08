@@ -4,6 +4,6 @@
 imagemorpher/morph/images/
 imagemorpher/morph/temp_morphed_images/
 node_modules/
-imagemorpher/morph-app-pef.log
-imagemorpher/morph-app.log
+imagemorpher/logs/
+imagemorpher/morph/content/
 
