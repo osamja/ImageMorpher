@@ -15,7 +15,7 @@ load_dotenv()
 import os
 
 import logging
-logging.basicConfig(filename='logs/morph-app-pef.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='logs/morph-app-perf.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
 
 """
 Image Morphing
@@ -33,7 +33,7 @@ def stopWatch(value, message="useless"):
 
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
-  predictor = dlib.shape_predictor('/app/imagemorpher/morph/shape_predictor_68_face_landmarks.dat')
+  predictor = dlib.shape_predictor('utils/shape_predictor_68_face_landmarks.dat')
   face = detector(img, 1)[0]      # get first face
   face_detection_object = predictor(img, face)
   face_points = face_detection_object.parts()
@@ -61,19 +61,24 @@ def crossDisolve(pts1, pts2, t, isImage=True):
     dissolveImg = np.add(first_image, second_image)
   return dissolveImg
 
-def getTriPoints(im1, tri):
-  tri_dict = {}
-  tri_dict[-1] = []
-  for iter, t in enumerate(tri.simplices):
-    tri_dict[iter] = []
+def testTriDictCorrectness(tri_dict):
+  expected_num_pts_in_tri_1 = 1269
+  assert(expected_num_pts_in_tri_1 == len(tri_dict[0]))
 
-  # Sort every pixel into our triangles
-  for row in range(im1.shape[0]):
-    for column in range(im1.shape[1]):
-      pt = np.array([column, row])
-      triNum = int(Delaunay.find_simplex(tri, pt))
-      # triNum = int(tsearch(tri, pt))
-      tri_dict[triNum].append(pt)
+def getTriPoints(im1, tri):
+  """
+  Map every point/pixel in im1 to its corresponding triangle
+
+  data structure:  {tri_num: [pixels belonging to cur_tri]}
+  """
+  tri_dict = {}
+  
+  grid_points = np.asarray([(x, y) for y in range(im1.shape[0]) for x in range(im1.shape[1])], np.uint32)
+  triNums = Delaunay.find_simplex(tri, grid_points[:len(grid_points)-1]) # minor bug: this is causing one point to not be mapped to a triangle
+  
+  for i in range(len(tri.simplices)):
+    tri_dict[i] = grid_points[np.where(triNums == i)]
+
   return tri_dict
 
 # Given a 2D point, returns the homogenous point coordinate.
@@ -213,7 +218,32 @@ def morph(img1, img2, t):
   stopWatch(end_time - start_time, "getMorphedImg")
 
   img_filename = getMorphedImgUri() + '.jpg'
-  morphed_img_path = 'morph/temp_morphed_images/' + img_filename
+  morphed_img_path = 'content/temp_morphed_images/' + img_filename
   morphed_img_uri = static_base_url + '/' + img_filename
   imageio.imwrite(morphed_img_path, morphed_im)
   return morphed_img_uri
+
+
+# TEMPORARY FOR TESTING"
+
+# img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
+    # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
+
+small_im1_filename = 'content/images/obama_small.jpg'
+small_im2_filename = 'content/images/george_small.jpg'
+big_im1_filename = 'content/images/obama_fit.jpg'
+big_im2_filename = 'content/images/clooney_fit.jpg'
+
+# Load small images for regression testing
+img1_filename = small_im1_filename
+img2_filename = small_im2_filename
+
+# Load larger images for performance testing
+# img1_filename = big_im1_filename
+# img2_filename = big_im2_filename
+
+img1 = sk.io.imread(img1_filename)
+img2 = sk.io.imread(img2_filename)
+log_message = 'Morphing ', (img1_filename, img2_filename)
+logging.info(log_message)
+morphed_img_uri = morph(img1, img2, 0.5)

@@ -1,6 +1,8 @@
 *.pyc
 .env
 .pyc*
+.log*
+logs/
 imagemorpher/morph/images/
 imagemorpher/morph/temp_morphed_images/
 node_modules/
