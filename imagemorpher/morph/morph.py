@@ -125,21 +125,14 @@ def getWarpedImgPlaceholder(src_img, dest_img):
   """
   max_num_rows = max(src_img.shape[0], dest_img.shape[0])
   max_num_columns = max(src_img.shape[1], dest_img.shape[1])
-
-  max_num = max(max_num_rows, max_num_columns)
-  #return np.zeros((max_num, max_num), dtype=np.uint8)
   
   return np.zeros((max_num_rows, max_num_columns, 3), dtype=np.uint8)
 
 def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_pts):
   """
-
+  Since the src/dest warped pixels subsample their color from the original 
+  src/dest images, we must count only the pixels we can get a valid color sample from
   """
-  # since the src/dest warped pixels subsample their color from the original 
-  # src/dest images, we must count only the pixels we can get a color sample from
-  # print('triNum: ', triNum)
-  # pdb.set_trace()
-
   valid_x_warped_src_pts = np.where(warped_src_pts.T[0] < src_img.shape[1]-1)[0]
   valid_y_warped_src_pts = np.where(warped_src_pts.T[1] < src_img.shape[0]-1)[0]
   valid_src_pt_indices = np.unique(np.concatenate((valid_x_warped_src_pts,valid_y_warped_src_pts),0))
@@ -147,12 +140,6 @@ def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_
   valid_x_warped_dest_pts = np.where(warped_dest_pts.T[0] < dest_img.shape[1]-1)[0]
   valid_y_warped_dest_pts = np.where(warped_dest_pts.T[1] < dest_img.shape[0]-1)[0]
   valid_dest_pt_indices = np.unique(np.concatenate((valid_x_warped_dest_pts,valid_y_warped_dest_pts),0))
-
-  # print('num cut src x pts: ', len(warped_src_pts) - len(valid_x_warped_src_pts))
-  # print('num cut src y pts: ', len(warped_src_pts) - len(valid_y_warped_src_pts))
-  # print('num cut dest x pts: ', len(warped_dest_pts) - len(valid_x_warped_dest_pts))
-  # print('num cut dest y pts: ', len(warped_dest_pts) - len(valid_y_warped_dest_pts))
-  # pdb.set_trace()
 
   # ideally here we join the valid x,y arrays and then filter on the warped_src_pts
   valid_warped_src_pts = warped_src_pts[valid_src_pt_indices]
@@ -163,9 +150,6 @@ def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_
 
 def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
   morphed_im = getWarpedImgPlaceholder(src_img, dest_img)         #np.zeros(src_img.shape, dtype=np.uint8)
-  morph_amount = t
-  source_image = src_img
-  destination_image = dest_img
 
   # iterate over each triangle
   for i, triangle in enumerate(tri.simplices):
@@ -184,8 +168,6 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
     yDestPts = warped_dest_pts.T[1]
     xDestPts = warped_dest_pts.T[0]
 
-    #pdb.set_trace()
-
     warped_src_colors = src_img[ySrcPts, xSrcPts]
     warped_dest_colors = dest_img[yDestPts, xDestPts]
 
@@ -193,27 +175,9 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
 
     warped_x_pts = tri_pts_without_ones.T[0]
     warped_y_pts = tri_pts_without_ones.T[1]
-    
 
     morphed_im[warped_y_pts, warped_x_pts] = warped_dissolved_colors
-    """
-    for p in tri_dict[i]:
-      b = getHomoPt(p)
-      warped_src_pixel = np.dot(T1_inv[i], b) # investigate whether this computation can be vectorized (e.g. np.dot(T1_inv, tri_dict))
-      warped_dest_pixel = np.dot(T2_inv[i], b)
-      pixel_x = int(np.around(warped_src_pixel[0]))  # round rather than interpolate for now
-      pixel_y = int(np.around(warped_src_pixel[1]))
-      pixel_x2 = int(np.around(warped_dest_pixel[0]))
-      pixel_y2 = int(np.around(warped_dest_pixel[1]))
-
-      #may not be needed
-      if (shouldClipPixel(src_img.shape, pixel_x, pixel_y) or shouldClipPixel(dest_img.shape, pixel_x2, pixel_y2)):
-        continue
-
-      color1 = src_img[pixel_y][pixel_x]
-      color2 = dest_img[pixel_y2][pixel_x2]
-      morphed_im[p[1]][p[0]] = crossDisolve(color1, color2, t)
-  """
+  
   return morphed_im
 
 def getInverseTransformationDictionary(src_pts, triangulations):
@@ -314,8 +278,8 @@ img1_filename = small_im1_filename
 img2_filename = small_im2_filename
 
 # Load larger images for performance testing
-img1_filename = big_im1_filename
-img2_filename = big_im2_filename
+# img1_filename = big_im1_filename
+# img2_filename = big_im2_filename
 
 img1 = sk.io.imread(img1_filename)
 img2 = sk.io.imread(img2_filename)
