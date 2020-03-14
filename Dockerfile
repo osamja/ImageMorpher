@@ -4,11 +4,9 @@
 # django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
 # gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
 
-# BUILD IMAGE: [use SCREEN FIRST!]: docker build -t face-morpher-api:prod -f Dockerfile .
-# RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:dev 
-# SHELL: docker container run -it -p 8088:8088 
-#   -v /home/sammy/ImageMorpher/imagemorpher/morph/temp_morphed_images:/app/imagemorpher/morph/temp_morphed_images face-morpher-api:dev bash
-#  docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher/imagemorpher:/app/imagemorpher/ face-morpher-api:dev bash
+# BUILD IMAGE: [use SCREEN FIRST!]: docker build -t face-morpher-api:stage -f Dockerfile .
+# RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:stage 
+# SHELL: docker container run -it -v /home/sammy/ImageMorpher:/app face-morpher-api:stage bash
 
 FROM ubuntu:18.04
 RUN apt-get update
@@ -18,9 +16,6 @@ RUN pip3 install --upgrade virtualenv
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-# create directories needed beforehand
-RUN mkdir -p /app/imageimagemorpher
 
 WORKDIR /app
 
@@ -52,10 +47,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --verbose
 
 ENV PORT_NUM=8088
-WORKDIR /app/imagemorpher/
 
 # CMD ["python", "manage.py", "runserver", PORT_NUM]
 # CMD python manage.py runserver 0:8088

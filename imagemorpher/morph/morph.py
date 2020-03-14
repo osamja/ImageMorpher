@@ -1,8 +1,6 @@
 import skimage as sk
 import numpy as np
-from utils.graphics import plotTri, plotImg, plotCorrespondingPoints, plotDelauneyTesselation
 import matplotlib.pyplot as plt
-from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints
 from scipy.spatial import Delaunay
 import time
 import imageio
@@ -12,10 +10,14 @@ import datetime
 import uuid
 from dotenv import load_dotenv
 load_dotenv()
-import os
+import sys
+# morph is essentially the src root directory in this file now
+#   aka import all files with morph/<file-path>
+sys.path.insert(0, '/app/imagemorpher/morph')
+from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints
 
 import logging
-logging.basicConfig(filename='logs/morph-app-perf.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
 
 """
 Image Morphing
@@ -33,8 +35,15 @@ def stopWatch(value, message="useless"):
 
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
-  predictor = dlib.shape_predictor('utils/shape_predictor_68_face_landmarks.dat')
-  face = detector(img, 1)[0]      # get first face
+  predictor = dlib.shape_predictor('morph/utils/shape_predictor_68_face_landmarks.dat')
+  # logging.info('detector: ', detector)
+  # pdb.set_trace()
+  try:
+    face = detector(img, 1)[0]      # get first face
+  except Exception as e:
+    # ideally here, we return this in the HTTP Response
+    logging.error("Could not find corresponding points..")
+    raise
   face_detection_object = predictor(img, face)
   face_points = face_detection_object.parts()
   landmarks = np.array([[p.x, p.y] for p in face_points])
@@ -133,12 +142,16 @@ def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_
   Since the src/dest warped pixels subsample their color from the original 
   src/dest images, we must count only the pixels we can get a valid color sample from
   """
-  valid_x_warped_src_pts = np.where(warped_src_pts.T[0] < src_img.shape[1]-1)[0]
-  valid_y_warped_src_pts = np.where(warped_src_pts.T[1] < src_img.shape[0]-1)[0]
+
+  # TEMP
+  # return warped_src_pts, warped_dest_pts
+
+  valid_x_warped_src_pts = np.where(warped_src_pts.T[0] < src_img.shape[1])[0]
+  valid_y_warped_src_pts = np.where(warped_src_pts.T[1] < src_img.shape[0])[0]
   valid_src_pt_indices = np.unique(np.concatenate((valid_x_warped_src_pts,valid_y_warped_src_pts),0))
 
-  valid_x_warped_dest_pts = np.where(warped_dest_pts.T[0] < dest_img.shape[1]-1)[0]
-  valid_y_warped_dest_pts = np.where(warped_dest_pts.T[1] < dest_img.shape[0]-1)[0]
+  valid_x_warped_dest_pts = np.where(warped_dest_pts.T[0] < dest_img.shape[1])[0]
+  valid_y_warped_dest_pts = np.where(warped_dest_pts.T[1] < dest_img.shape[0])[0]
   valid_dest_pt_indices = np.unique(np.concatenate((valid_x_warped_dest_pts,valid_y_warped_dest_pts),0))
 
   # ideally here we join the valid x,y arrays and then filter on the warped_src_pts
@@ -147,6 +160,26 @@ def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_
 
   return valid_warped_src_pts, valid_warped_dest_pts
 
+def getValidColorSamplePts(img, xPts, yPts):
+  """
+  The img will be accessed at locations [yPts, xPts]
+  Thus we must ensure that we're not indexing past the boundaries of our image
+  This function will cut the largest coordinate location if necesasry to ensure proper indexing 
+  """
+  num_rows, num_columns = img.shape[:2]
+  if max(xPts) >= num_columns:
+    xPts = xPts[np.where(xPts != max(xPts))[0]]
+  if  max(yPts) >= num_rows:
+    yPts = yPts[np.where(yPts != max(yPts))[0]]
+
+  # trim pts to the min number since these are coordinates thus len(xPts) must equal len (yPts)
+  
+  min_length = min(len(xPts), len(yPts))
+  xPts = xPts[:min_length]
+  yPts = yPts[:min_length]
+
+  assert(len(xPts) == len(yPts))
+  return xPts, yPts
 
 def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
   morphed_im = getWarpedImgPlaceholder(src_img, dest_img)         #np.zeros(src_img.shape, dtype=np.uint8)
@@ -168,6 +201,12 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
     yDestPts = warped_dest_pts.T[1]
     xDestPts = warped_dest_pts.T[0]
 
+    pdb.set_trace()
+    # we may want to cut a 1-2 pts in case we can't index into the src/dest image for color sampling
+    print(i, src_img.shape, max(xSrcPts), max(ySrcPts))
+    xSrcPts, ySrcPts = getValidColorSamplePts(src_img, xSrcPts, ySrcPts)
+    xDestPts, yDestPts = getValidColorSamplePts(dest_img, xDestPts, yDestPts)
+    
     warped_src_colors = src_img[ySrcPts, xSrcPts]
     warped_dest_colors = dest_img[yDestPts, xDestPts]
 
@@ -225,64 +264,47 @@ def morph(img1, img2, t):
   Create morph from img1 to img2 at time t
   """
   
-  start_time = time.time() # timer 1
   static_base_url = 'https://sammyjaved.com/facemorphs'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
-  end_time = time.time()
-  stopWatch(end_time - start_time, "detecting corresponding points")
-
-  start_time = time.time() # timer 2
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
   midpoint_tesselation = Delaunay(midPoints)
-  end_time = time.time()
-  stopWatch(end_time - start_time, "cross disolve + delaunay")
-
-  start_time = time.time() # timer 3
   tri_to_point_dict = getTriPoints(img1, midpoint_tesselation)
-  end_time = time.time()
-  stopWatch(end_time - start_time, "getTriPoints")
 
-  start_time = time.time() # timer 4
   img1_affine_pts = np.vstack((img1_corresponding_pts.T, np.ones(img1_corresponding_pts.T.shape[1])))# Add 1 to each coordinate pair for affine transformation
   img2_affine_pts = np.vstack((img2_corresponding_pts.T, np.ones(img2_corresponding_pts.T.shape[1])))
   T1_inv_dict = getInverseTransformationDictionary(img1_affine_pts, midpoint_tesselation)
   T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
-  end_time = time.time()
-  stopWatch(end_time - start_time, "getInverseTransformationDictionary")
-
-  start_time = time.time() # timer 5
   morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
-  end_time = time.time()
-  stopWatch(end_time - start_time, "getMorphedImg")
-
   img_filename = getMorphedImgUri() + '.jpg'
-  morphed_img_path = 'content/temp_morphed_images/' + img_filename
+  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename
   morphed_img_uri = static_base_url + '/' + img_filename
+  pdb.set_trace()
   imageio.imwrite(morphed_img_path, morphed_im)
   return morphed_img_uri
 
-
+###########################################################################################
 # TEMPORARY FOR TESTING"
+###########################################################################################
 
 # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
 
-small_im1_filename = 'content/images/obama_small.jpg'
-small_im2_filename = 'content/images/george_small.jpg'
-big_im1_filename = 'content/images/obama_fit.jpg'
-big_im2_filename = 'content/images/clooney_fit.jpg'
+# small_im1_filename = 'morph/content/images/obama_small.jpg'
+# small_im2_filename = 'morph/content/images/george_small.jpg'
+# big_im1_filename = 'morph/content/images/obama_fit.jpg'
+# big_im2_filename = 'morph/content/images/clooney_fit.jpg'
 
 # Load small images for regression testing
-img1_filename = small_im1_filename
-img2_filename = small_im2_filename
+# img1_filename = small_im1_filename
+# img2_filename = small_im2_filename
 
 # Load larger images for performance testing
 # img1_filename = big_im1_filename
 # img2_filename = big_im2_filename
 
-img1 = sk.io.imread(img1_filename)
-img2 = sk.io.imread(img2_filename)
-log_message = 'Morphing ', (img1_filename, img2_filename)
-logging.info(log_message)
-morphed_img_uri = morph(img1, img2, 0.5)
+# img1 = sk.io.imread(img1_filename)
+# img2 = sk.io.imread(img2_filename)
+# log_message = 'Morphing ', (img1_filename, img2_filename)
+# logging.info(log_message)
+# morphed_img_uri = morph(img1, img2, 0.5)

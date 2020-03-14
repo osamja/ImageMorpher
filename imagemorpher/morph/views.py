@@ -46,14 +46,11 @@ def index(request):
     
     try:
         morphed_img_uri = morph(img1, img2, 0.5)
+        return Response(morphed_img_uri)
     except Exception as e:
         logging.error('Error %s', exc_info=e)
-    try:
-        return Response(morphed_img_uri)
-    except IOError:
         raise
-        return Response('error bro')
-    return Response('wut wut')
+    return Response('Sorry, there was an error processing your reqest')
 
 @api_view(["GET"])
 def getIndex(request):
