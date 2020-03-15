@@ -28,11 +28,6 @@ how do we create a morphing sequence?-
 3. Cross-dissolve the colors in the newly warped images
 """
 
-def stopWatch(value, message="useless"):
-    log_message = message + " took seconds ", int(value)
-    logging.info(log_message)
-    print(log_message)
-
 def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
   predictor = dlib.shape_predictor('morph/utils/shape_predictor_68_face_landmarks.dat')
@@ -70,9 +65,6 @@ def crossDisolve(pts1, pts2, t, isImage=True):
     dissolveImg = np.add(first_image, second_image)
   return dissolveImg
 
-def testTriDictCorrectness(tri_dict):
-  expected_num_pts_in_tri_1 = 1269
-  assert(expected_num_pts_in_tri_1 == len(tri_dict[0]))
 
 def getTriPoints(im1, tri):
   """
@@ -89,40 +81,6 @@ def getTriPoints(im1, tri):
     tri_dict[i] = grid_points[np.where(triNums == i)]
 
   return tri_dict
-
-# Given a 2D point, returns the homogenous point coordinate.
-def getHomoPt(pt):
-  pt = pt.reshape(2, 1)
-  return np.pad(pt, ((0, 1), (0, 0)), mode='constant', constant_values=1)
-
-def shouldClipPixel(img_shape, px, py):
-  w, h = img_shape[1]-1, img_shape[0] - 1
-  if (px > w or py > h):
-    return True
-  return False
-
-# Clip values outside the boundaries of our image
-def clipValues(im1, im2, px, py, px2, py2):
-  w, h = im1.shape[1] - 1, im1.shape[0] - 1
-  if (px > w):
-    px = w
-  if (px2 > w):
-    px2 = w
-  if (py > h):
-    py = h
-  if (py2 > h):
-    py2 = h
-  return px, py, px2, py2
-
-# For every pixel that wasn't in a triangle, fill it in.
-def fillNonTrianglePixels(im1, im2, new_im, tri_dict, alpha):
-	for p in tri_dict[-1]:
-		x = p[0]
-		y = p[1]
-		color1 = im1[y][x]
-		color2 = im2[y][x]
-		new_im[y][x] = (1-alpha) * color1 + alpha * color2
-	return new_im
 
 def getWarpedImgPlaceholder(src_img, dest_img):
   """
@@ -219,7 +177,50 @@ def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
   
   return morphed_im
 
-def getInverseTransformationDictionary(src_pts, triangulations):
+def getMorphedImgV2(img, tri_dict, inv_transformation, t):
+  """
+  Given the image and its target triangulation, warp the image towards its target using inv_transformation
+  """
+  pdb.set_trace()
+
+  # iterate over each triangle
+  for i in range(len(tri_dict)):
+    tri_pts_without_ones = tri_dict[i]
+    tri_pts = np.vstack((tri_dict[i].T, np.ones(len(tri_dict[i])))).T
+    warped_src_pts = np.dot(T1_inv[i], tri_pts.T).T
+    warped_dest_pts = np.dot(T2_inv[i], tri_pts.T).T
+
+    # convert pts to integers since we can't warp fractions of a pixel
+    warped_src_pts = warped_src_pts.astype(int) #np.around(warped_src_pixels)
+    warped_dest_pts = warped_dest_pts.astype(int) #np.around(warped_dest_pixels)
+  
+    warped_src_pts, warped_dest_pts = getValidWarpedPoints(i, src_img, dest_img, warped_src_pts, warped_dest_pts)
+    ySrcPts = warped_src_pts.T[1]
+    xSrcPts = warped_src_pts.T[0]
+
+    pdb.set_trace()
+    # we may want to cut a 1-2 pts in case we can't index into the src/dest image for color sampling
+    print(i, src_img.shape, max(xSrcPts), max(ySrcPts))
+    xSrcPts, ySrcPts = getValidColorSamplePts(src_img, xSrcPts, ySrcPts)
+    xDestPts, yDestPts = getValidColorSamplePts(dest_img, xDestPts, yDestPts)
+    
+    warped_src_colors = src_img[ySrcPts, xSrcPts]
+    warped_dest_colors = dest_img[yDestPts, xDestPts]
+
+    warped_dissolved_colors = crossDisolve(warped_src_colors, warped_dest_colors, t)
+
+    warped_x_pts = tri_pts_without_ones.T[0]
+    warped_y_pts = tri_pts_without_ones.T[1]
+
+    morphed_im[warped_y_pts, warped_x_pts] = warped_dissolved_colors
+
+  return morphed_im
+
+
+def getInverseTransformation(src_pts, triangulations):
+  # Add 1 to each coordinate pair for affine transformation
+  src_pts = np.vstack((src_pts.T, np.ones(src_pts.T.shape[1])))
+
   T_inv_transforms = []
   for i, tri in enumerate(triangulations.simplices):
     tri_pts = triangulations.points[tri]
@@ -233,12 +234,12 @@ def getInverseTransformationDictionary(src_pts, triangulations):
       A = np.dot(tri_pts.T, np.linalg.pinv(src_pts_to_tri.T))
       A_inv = np.linalg.pinv(A)
     except:
-      print("Singular matrix at index ", i)
+      logging.info("Singular matrix detected..")
       raise
     T_inv_transforms.append(A_inv)
   return T_inv_transforms
 
-def getMorphSequence(img1_name, img2_name, t_step):
+def getMorphSequence(img1_name, img2_name, t_step=0.2):
   """
   t_step is the time step between each iteration of the morph (0 to 1)
   """
@@ -248,39 +249,36 @@ def getMorphSequence(img1_name, img2_name, t_step):
     t += t_step
   return "Morph sequence is complete"
 
-def crop_image_blacked_rows(img,tol=0):
-  mask = img>tol
-  if img.ndim==3:
-      mask = mask.all(2)
-  mask0,mask1 = mask.any(0),mask.any(1)
-  return img[np.ix_(mask0,mask1)]
-
-def getMorphedImgUri():
-  random_path = uuid.uuid4()
-  return random_path.hex
+def saveImg(morphedImg):
+  fileHash = uuid.uuid4()
+  img_filename = fileHash.hex + '.jpg'
+  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
+  morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + img_filename     # /facemorphs directory serves static content via nginx
+  imageio.imwrite(morphed_img_path, morphedImg)
+  return morphed_img_uri
 
 def morph(img1, img2, t):
   """'
   Create morph from img1 to img2 at time t
   """
-  
-  static_base_url = 'https://sammyjaved.com/facemorphs'
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
+
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
   midpoint_tesselation = Delaunay(midPoints)
-  tri_to_point_dict = getTriPoints(img1, midpoint_tesselation)
 
-  img1_affine_pts = np.vstack((img1_corresponding_pts.T, np.ones(img1_corresponding_pts.T.shape[1])))# Add 1 to each coordinate pair for affine transformation
-  img2_affine_pts = np.vstack((img2_corresponding_pts.T, np.ones(img2_corresponding_pts.T.shape[1])))
-  T1_inv_dict = getInverseTransformationDictionary(img1_affine_pts, midpoint_tesselation)
-  T2_inv_dict = getInverseTransformationDictionary(img2_affine_pts, midpoint_tesselation)
-  morphed_im = getMorphedImg(img1, img2, midpoint_tesselation, tri_to_point_dict, T1_inv_dict, T2_inv_dict, t)
-  img_filename = getMorphedImgUri() + '.jpg'
-  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename
-  morphed_img_uri = static_base_url + '/' + img_filename
-  pdb.set_trace()
-  imageio.imwrite(morphed_img_path, morphed_im)
+  img1_tri_to_point = getTriPoints(img1, midpoint_tesselation)
+  img2_tri_to_point = getTriPoints(img2, midpoint_tesselation)
+
+  T1_inv_dict = getInverseTransformation(img1_corresponding_pts, midpoint_tesselation)
+  T2_inv_dict = getInverseTransformation(img2_corresponding_pts, midpoint_tesselation)
+
+  img1_warped = getMorphedImgV2(img1, img1_tri_to_point, T1_inv_dict, t)
+  img2_warped = getMorphedImgV2(img2, img2_tri_to_point, T2_inv_dict, t)
+
+  morphed_im = crossDisolve(img1_warped, img2_warped, t)
+  morphed_img_uri = saveImg(morphed_im)
+  
   return morphed_img_uri
 
 ###########################################################################################
