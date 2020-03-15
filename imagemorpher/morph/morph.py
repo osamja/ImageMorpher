@@ -18,7 +18,7 @@ sys.path.insert(0, '/app/imagemorpher/morph')
 from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints
 
 import logging
-logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
 
 """
 Image Morphing
@@ -130,18 +130,21 @@ def getWarpedImg(img, tri_dict, inv_transformation, t):
     warped_x_pts = warped_pts.T[0]
 
     if (len(warped_x_pts) == 0 or len(warped_y_pts) == 0):
+      print('no warped pts available')
       continue
-    
+   
     try:
       warped_x_pts, warped_y_pts = getValidColorSamplePts(img, warped_x_pts, warped_y_pts)
       warped_colors = img[warped_y_pts, warped_x_pts]
     except:
-      print(i, warped_x_pts.shape, warped_y_pts.shape)
+      print(i, len(tri_dict), warped_x_pts.shape, warped_y_pts.shape)
       raise
 
     try:
       # pdb.set_trace()
-      morphed_im[warped_y_pts, warped_x_pts] = warped_colors
+      img_pts = tri_dict[i]
+      img_x_pts, img_y_pts = img_pts.T[0], img_pts.T[1]
+      morphed_im[img_y_pts, img_x_pts] = warped_colors
     except:
       print(i, morphed_im.shape, len(morphed_im), warped_colors.shape, len(warped_colors), len(warped_x_pts), len(warped_y_pts))
       raise
@@ -223,28 +226,25 @@ def morph(img1, img2, t):
 # TEMPORARY FOR TESTING"
 ###########################################################################################
 
-# img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
-    # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
+small_im1_filename = 'morph/content/images/obama_small.jpg'
+small_im2_filename = 'morph/content/images/george_small.jpg'
 
-# small_im1_filename = 'morph/content/images/obama_small.jpg'
-# small_im2_filename = 'morph/content/images/george_small.jpg'
+big_im1_filename = 'morph/content/images/obama_fit.jpg'
+big_im2_filename = 'morph/content/images/clooney_fit.jpg'
 
-# big_im1_filename = 'morph/content/images/obama_fit.jpg'
-# big_im2_filename = 'morph/content/images/clooney_fit.jpg'
-
-# big_im1_filename = 'morph/content/images/tiger_high.jpg'
-# big_im2_filename = 'morph/content/images/adele_high.jpg'
+big_im1_filename = 'morph/content/images/tiger_high.jpg'
+big_im2_filename = 'morph/content/images/adele_high.jpg'
 
 # Load small images for regression testing
-# img1_filename = small_im1_filename
-# img2_filename = small_im2_filename
+img1_filename = small_im1_filename
+img2_filename = small_im2_filename
 
 # Load larger images for performance testing
 # img1_filename = big_im1_filename
 # img2_filename = big_im2_filename
 
-# img1 = sk.io.imread(img1_filename)
-# img2 = sk.io.imread(img2_filename)
-# log_message = 'Morphing ', (img1_filename, img2_filename)
-# logging.info(log_message)
-# morphed_img_uri = morph(img1, img2, 0.5)
+img1 = sk.io.imread(img1_filename)
+img2 = sk.io.imread(img2_filename)
+log_message = 'Morphing ', (img1_filename, img2_filename)
+logging.info(log_message)
+morphed_img_uri = morph(img1, img2, 0.5)
