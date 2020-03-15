@@ -62,7 +62,7 @@ def crossDisolve(pts1, pts2, t, isImage=True):
   ### Ensure images are same size, else resize them to be scaling up if necessary
   if (isImage):
     if (pts1.shape != pts2.shape):
-      pdb.set_trace()
+      # pdb.set_trace()
       new_shape = min(pts1.shape, pts2.shape)
       pts1 = np.resize(pts1, new_shape) #resize(pts1, bigger_shape)
       pts2 = np.resize(pts2, new_shape) #resize(pts2, bigger_shape)
@@ -75,7 +75,6 @@ def crossDisolve(pts1, pts2, t, isImage=True):
   else:
     dissolveImg = np.add(first_image, second_image)
   return dissolveImg
-
 
 def getTriPoints(im1, tri):
   """
@@ -93,47 +92,11 @@ def getTriPoints(im1, tri):
 
   return tri_dict
 
-def getWarpedImgPlaceholder(src_img, dest_img):
-  """
-  Given the source and destination image, 
-  returns a blank image that has the max width/height of each src/dst image
-
-  Having the warped image be >= to the source/destination images will increase
-  the chances that warped pixels are not out of bounds
-  """
-  max_num_rows = max(src_img.shape[0], dest_img.shape[0])
-  max_num_columns = max(src_img.shape[1], dest_img.shape[1])
-  
-  return np.zeros((max_num_rows, max_num_columns, 3), dtype=np.uint8)
-
-def getValidWarpedPoints(triNum, src_img, dest_img, warped_src_pts, warped_dest_pts):
-  """
-  Since the src/dest warped pixels subsample their color from the original 
-  src/dest images, we must count only the pixels we can get a valid color sample from
-  """
-
-  # TEMP
-  # return warped_src_pts, warped_dest_pts
-
-  valid_x_warped_src_pts = np.where(warped_src_pts.T[0] < src_img.shape[1])[0]
-  valid_y_warped_src_pts = np.where(warped_src_pts.T[1] < src_img.shape[0])[0]
-  valid_src_pt_indices = np.unique(np.concatenate((valid_x_warped_src_pts,valid_y_warped_src_pts),0))
-
-  valid_x_warped_dest_pts = np.where(warped_dest_pts.T[0] < dest_img.shape[1])[0]
-  valid_y_warped_dest_pts = np.where(warped_dest_pts.T[1] < dest_img.shape[0])[0]
-  valid_dest_pt_indices = np.unique(np.concatenate((valid_x_warped_dest_pts,valid_y_warped_dest_pts),0))
-
-  # ideally here we join the valid x,y arrays and then filter on the warped_src_pts
-  valid_warped_src_pts = warped_src_pts[valid_src_pt_indices]
-  valid_warped_dest_pts = warped_dest_pts[valid_dest_pt_indices]
-
-  return valid_warped_src_pts, valid_warped_dest_pts
-
 def getValidColorSamplePts(img, xPts, yPts):
   """
   The img will be accessed at locations [yPts, xPts]
   Thus we must ensure that we're not indexing past the boundaries of our image
-  This function will cut the largest coordinate location if necesasry to ensure proper indexing 
+  This function will cut the largest coordinate location if necesasry to ensure proper indexing
   """
   num_rows, num_columns = img.shape[:2]
   if max(xPts) >= num_columns:
@@ -142,7 +105,7 @@ def getValidColorSamplePts(img, xPts, yPts):
     yPts = yPts[np.where(yPts != max(yPts))[0]]
 
   # trim pts to the min number since these are coordinates thus len(xPts) must equal len (yPts)
-  
+
   min_length = min(len(xPts), len(yPts))
   xPts = xPts[:min_length]
   yPts = yPts[:min_length]
@@ -150,7 +113,7 @@ def getValidColorSamplePts(img, xPts, yPts):
   assert(len(xPts) == len(yPts))
   return xPts, yPts
 
-def getMorphedImgV2(img, tri_dict, inv_transformation, t):
+def getWarpedImg(img, tri_dict, inv_transformation, t):
   """
   Given the image and its target triangulation, warp the image towards its target using inv_transformation
   """
@@ -158,27 +121,32 @@ def getMorphedImgV2(img, tri_dict, inv_transformation, t):
 
   # iterate over each triangle
   for i in range(len(tri_dict)):
-    tri_pts_without_ones = tri_dict[i]    # used for coordinate indexing
     tri_pts = np.vstack((tri_dict[i].T, np.ones(len(tri_dict[i])))).T
     warped_pts = np.dot(inv_transformation[i], tri_pts.T).T
 
     # convert pts to integers since we can't warp fractions of a pixel
     warped_pts = warped_pts.astype(int)
-  
-    yPts = warped_pts.T[1]
-    xPts = warped_pts.T[0]
+    warped_y_pts = warped_pts.T[1]
+    warped_x_pts = warped_pts.T[0]
 
-    # xPts, yPts = getValidColorSamplePts(img, xPts, yPts)
+    if (len(warped_x_pts) == 0 or len(warped_y_pts) == 0):
+      continue
     
-    warped_colors = img[yPts, xPts]
+    try:
+      warped_x_pts, warped_y_pts = getValidColorSamplePts(img, warped_x_pts, warped_y_pts)
+      warped_colors = img[warped_y_pts, warped_x_pts]
+    except:
+      print(i, warped_x_pts.shape, warped_y_pts.shape)
+      raise
 
-    warped_x_pts = tri_pts_without_ones.T[0]
-    warped_y_pts = tri_pts_without_ones.T[1]
-
-    morphed_im[warped_y_pts, warped_x_pts] = warped_colors
+    try:
+      # pdb.set_trace()
+      morphed_im[warped_y_pts, warped_x_pts] = warped_colors
+    except:
+      print(i, morphed_im.shape, len(morphed_im), warped_colors.shape, len(warped_colors), len(warped_x_pts), len(warped_y_pts))
+      raise
 
   return morphed_im
-
 
 def getInverseTransformation(src_pts, triangulations):
   # Add 1 to each coordinate pair for affine transformation
@@ -238,8 +206,13 @@ def morph(img1, img2, t):
   T1_inv_dict = getInverseTransformation(img1_corresponding_pts, midpoint_tesselation)
   T2_inv_dict = getInverseTransformation(img2_corresponding_pts, midpoint_tesselation)
 
-  img1_warped = getMorphedImgV2(img1, img1_tri_to_point, T1_inv_dict, t)
-  img2_warped = getMorphedImgV2(img2, img2_tri_to_point, T2_inv_dict, t)
+  img1_warped = getWarpedImg(img1, img1_tri_to_point, T1_inv_dict, t)
+  img2_warped = getWarpedImg(img2, img2_tri_to_point, T2_inv_dict, t)
+
+  ## for testing purposes only
+  saveImg(img1_warped)
+  saveImg(img2_warped)
+  ##
 
   morphed_im = crossDisolve(img1_warped, img2_warped, t)
   morphed_img_uri = saveImg(morphed_im)
