@@ -1,3 +1,5 @@
+import datetime
+from pytz import timezone
 import skimage as sk
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,17 +57,35 @@ def addCornerPointsOnImg(im1, pts):
   pts = np.append(pts, np.array([maxW, maxH]).reshape((1,2)), axis=0)
   return pts
 
+def resizePts(pts1, pts2, compareLength=False):
+  """
+  Resize the pts as a np array or length wise
+  """
+  if (compareLength):
+    if (len(pts1) != len(pts2)):
+      new_length = min(len(pts1), len(pts2))
+      pdb.set_trace()
+      pts1Shape = list(pts1.shape)
+      pts1Shape[0] = new_length
+      pts2Shape = list(pts2.shape)
+      pts2Shape[0] = new_length
+
+      pts1 = np.resize(pts1, pts1Shape)
+      pts2 = np.resize(pts2, pts2Shape)
+  elif (pts1.shape != pts2.shape):
+    new_shape = min(pts1.shape, pts2.shape)
+    pts1 = np.resize(pts1, new_shape)
+    pts2 = np.resize(pts2, new_shape)
+  
+  return pts1, pts2
+
 # Cross Disolve between two images (set of pts) at time t
 #  e.g. Image(halfway t:0.5) = (1 - t) * Image_1 + t * Image_2 wh
 def crossDisolve(pts1, pts2, t, isImage=True):
 
   ### Ensure images are same size, else resize them to be scaling up if necessary
   if (isImage):
-    if (pts1.shape != pts2.shape):
-      # pdb.set_trace()
-      new_shape = min(pts1.shape, pts2.shape)
-      pts1 = np.resize(pts1, new_shape) #resize(pts1, bigger_shape)
-      pts2 = np.resize(pts2, new_shape) #resize(pts2, bigger_shape)
+    pts1, pts2 = resizePts(pts1, pts2)
   ###
 
   first_image = (1-t) * pts1
@@ -113,6 +133,11 @@ def getValidColorSamplePts(img, xPts, yPts):
   assert(len(xPts) == len(yPts))
   return xPts, yPts
 
+def getValidWarpPts(img_pts, warp_pts):
+  img_pts, warp_pts = resizePts(img_pts, warp_pts)
+  return img_pts, warp_pts
+
+
 def getWarpedImg(img, tri_dict, inv_transformation, t):
   """
   Given the image and its target triangulation, warp the image towards its target using inv_transformation
@@ -144,6 +169,10 @@ def getWarpedImg(img, tri_dict, inv_transformation, t):
       # pdb.set_trace()
       img_pts = tri_dict[i]
       img_x_pts, img_y_pts = img_pts.T[0], img_pts.T[1]
+      img_x_pts, img_y_pts = getValidColorSamplePts(morphed_im, img_x_pts, img_y_pts)
+      assert(len(img_x_pts) == len(img_y_pts))
+      img_x_pts, warped_colors = resizePts(img_x_pts, warped_colors, compareLength=True)
+      img_y_pts, warped_colors = resizePts(img_y_pts, warped_colors, compareLength=True)
       morphed_im[img_y_pts, img_x_pts] = warped_colors
     except:
       print(i, morphed_im.shape, len(morphed_im), warped_colors.shape, len(warped_colors), len(warped_x_pts), len(warped_y_pts))
@@ -189,7 +218,8 @@ def saveImg(morphedImg):
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
   morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + img_filename     # /facemorphs directory serves static content via nginx
   imageio.imwrite(morphed_img_path, morphedImg)
-  logging.info(img_filename)
+  log_message = str(datetime.datetime.now(timezone('UTC'))) + ': ' + img_filename 
+  logging.info(log_message)
 
   return morphed_img_uri
 
@@ -213,8 +243,8 @@ def morph(img1, img2, t):
   img2_warped = getWarpedImg(img2, img2_tri_to_point, T2_inv_dict, t)
 
   ## for testing purposes only
-  saveImg(img1_warped)
-  saveImg(img2_warped)
+  # saveImg(img1_warped)
+  # saveImg(img2_warped)
   ##
 
   morphed_im = crossDisolve(img1_warped, img2_warped, t)
@@ -232,19 +262,16 @@ small_im2_filename = 'morph/content/images/george_small.jpg'
 big_im1_filename = 'morph/content/images/obama_fit.jpg'
 big_im2_filename = 'morph/content/images/clooney_fit.jpg'
 
-big_im1_filename = 'morph/content/images/tiger_high.jpg'
-big_im2_filename = 'morph/content/images/adele_high.jpg'
-
 # Load small images for regression testing
 img1_filename = small_im1_filename
 img2_filename = small_im2_filename
 
 # Load larger images for performance testing
-# img1_filename = big_im1_filename
-# img2_filename = big_im2_filename
+img1_filename = big_im1_filename
+img2_filename = big_im2_filename
 
-img1 = sk.io.imread(img1_filename)
-img2 = sk.io.imread(img2_filename)
-log_message = 'Morphing ', (img1_filename, img2_filename)
-logging.info(log_message)
-morphed_img_uri = morph(img1, img2, 0.5)
+# img1 = sk.io.imread(img1_filename)
+# img2 = sk.io.imread(img2_filename)
+# log_message = 'Morphing ', (img1_filename, img2_filename)
+# logging.info(log_message)
+# morphed_img_uri = morph(img1, img2, 0.5)
