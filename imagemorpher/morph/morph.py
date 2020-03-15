@@ -60,22 +60,21 @@ def addCornerPointsOnImg(im1, pts):
 def resizePts(pts1, pts2, compareLength=False):
   """
   Resize the pts as a np array or length wise
+
+  @TODO: Crop the center of the pts to increase the likelihood of retaining the face
+  in the img
   """
   if (compareLength):
     if (len(pts1) != len(pts2)):
       new_length = min(len(pts1), len(pts2))
-      pdb.set_trace()
-      pts1Shape = list(pts1.shape)
-      pts1Shape[0] = new_length
-      pts2Shape = list(pts2.shape)
-      pts2Shape[0] = new_length
-
-      pts1 = np.resize(pts1, pts1Shape)
-      pts2 = np.resize(pts2, pts2Shape)
+      pts1 = pts1[:new_length]
+      pts2 = pts2[:new_length]
+      assert(len(pts1) == len(pts2))
   elif (pts1.shape != pts2.shape):
-    new_shape = min(pts1.shape, pts2.shape)
-    pts1 = np.resize(pts1, new_shape)
-    pts2 = np.resize(pts2, new_shape)
+    new_shape = (min(pts1.shape[0], pts2.shape[0]), min(pts1.shape[1], pts2.shape[1]), 3)
+    pts1 = pts1[:new_shape[0], :new_shape[1]]
+    pts2 = pts2[:new_shape[0], :new_shape[1]]
+    assert(pts1.shape == pts2.shape)
   
   return pts1, pts2
 
@@ -253,14 +252,20 @@ def morph(img1, img2, t):
   return morphed_img_uri
 
 ###########################################################################################
-# TEMPORARY FOR TESTING"
+# TEMPORARY FOR LOCAL TESTING"
 ###########################################################################################
 
 small_im1_filename = 'morph/content/images/obama_small.jpg'
 small_im2_filename = 'morph/content/images/george_small.jpg'
 
-big_im1_filename = 'morph/content/images/obama_fit.jpg'
+# big_im1_filename = 'morph/content/images/obama_fit.jpg'
 big_im2_filename = 'morph/content/images/clooney_fit.jpg'
+
+# big_im1_filename = 'morph/content/images/harry.jpg'
+big_im2_filename = 'morph/content/images/ron.jpg'
+
+big_im1_filename = 'morph/content/images/cruise.jpg'
+# big_im2_filename = 'morph/content/images/keanu.jpg'
 
 # Load small images for regression testing
 img1_filename = small_im1_filename
