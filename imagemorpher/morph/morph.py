@@ -2,6 +2,7 @@ import skimage as sk
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
+from skimage.transform import resize
 import time
 import imageio
 import dlib
@@ -57,6 +58,16 @@ def addCornerPointsOnImg(im1, pts):
 # Cross Disolve between two images (set of pts) at time t
 #  e.g. Image(halfway t:0.5) = (1 - t) * Image_1 + t * Image_2 wh
 def crossDisolve(pts1, pts2, t, isImage=True):
+
+  ### Ensure images are same size, else resize them to be scaling up if necessary
+  if (isImage):
+    if (pts1.shape != pts2.shape):
+      pdb.set_trace()
+      new_shape = min(pts1.shape, pts2.shape)
+      pts1 = np.resize(pts1, new_shape) #resize(pts1, bigger_shape)
+      pts2 = np.resize(pts2, new_shape) #resize(pts2, bigger_shape)
+  ###
+
   first_image = (1-t) * pts1
   second_image = (t) * pts2
   if (isImage):
@@ -139,80 +150,32 @@ def getValidColorSamplePts(img, xPts, yPts):
   assert(len(xPts) == len(yPts))
   return xPts, yPts
 
-def getMorphedImg(src_img, dest_img, tri, tri_dict, T1_inv, T2_inv, t):
-  morphed_im = getWarpedImgPlaceholder(src_img, dest_img)         #np.zeros(src_img.shape, dtype=np.uint8)
-
-  # iterate over each triangle
-  for i, triangle in enumerate(tri.simplices):
-    tri_pts_without_ones = tri_dict[i]
-    tri_pts = np.vstack((tri_dict[i].T, np.ones(len(tri_dict[i])))).T
-    warped_src_pts = np.dot(T1_inv[i], tri_pts.T).T
-    warped_dest_pts = np.dot(T2_inv[i], tri_pts.T).T
-
-    # convert pts to integers since we can't warp fractions of a pixel
-    warped_src_pts = warped_src_pts.astype(int) #np.around(warped_src_pixels)
-    warped_dest_pts = warped_dest_pts.astype(int) #np.around(warped_dest_pixels)
-  
-    warped_src_pts, warped_dest_pts = getValidWarpedPoints(i, src_img, dest_img, warped_src_pts, warped_dest_pts)
-    ySrcPts = warped_src_pts.T[1]
-    xSrcPts = warped_src_pts.T[0]
-    yDestPts = warped_dest_pts.T[1]
-    xDestPts = warped_dest_pts.T[0]
-
-    pdb.set_trace()
-    # we may want to cut a 1-2 pts in case we can't index into the src/dest image for color sampling
-    print(i, src_img.shape, max(xSrcPts), max(ySrcPts))
-    xSrcPts, ySrcPts = getValidColorSamplePts(src_img, xSrcPts, ySrcPts)
-    xDestPts, yDestPts = getValidColorSamplePts(dest_img, xDestPts, yDestPts)
-    
-    warped_src_colors = src_img[ySrcPts, xSrcPts]
-    warped_dest_colors = dest_img[yDestPts, xDestPts]
-
-    warped_dissolved_colors = crossDisolve(warped_src_colors, warped_dest_colors, t)
-
-    warped_x_pts = tri_pts_without_ones.T[0]
-    warped_y_pts = tri_pts_without_ones.T[1]
-
-    morphed_im[warped_y_pts, warped_x_pts] = warped_dissolved_colors
-  
-  return morphed_im
-
 def getMorphedImgV2(img, tri_dict, inv_transformation, t):
   """
   Given the image and its target triangulation, warp the image towards its target using inv_transformation
   """
-  pdb.set_trace()
+  morphed_im = np.zeros((img.shape), dtype=np.uint8)
 
   # iterate over each triangle
   for i in range(len(tri_dict)):
-    tri_pts_without_ones = tri_dict[i]
+    tri_pts_without_ones = tri_dict[i]    # used for coordinate indexing
     tri_pts = np.vstack((tri_dict[i].T, np.ones(len(tri_dict[i])))).T
-    warped_src_pts = np.dot(T1_inv[i], tri_pts.T).T
-    warped_dest_pts = np.dot(T2_inv[i], tri_pts.T).T
+    warped_pts = np.dot(inv_transformation[i], tri_pts.T).T
 
     # convert pts to integers since we can't warp fractions of a pixel
-    warped_src_pts = warped_src_pts.astype(int) #np.around(warped_src_pixels)
-    warped_dest_pts = warped_dest_pts.astype(int) #np.around(warped_dest_pixels)
+    warped_pts = warped_pts.astype(int)
   
-    warped_src_pts, warped_dest_pts = getValidWarpedPoints(i, src_img, dest_img, warped_src_pts, warped_dest_pts)
-    ySrcPts = warped_src_pts.T[1]
-    xSrcPts = warped_src_pts.T[0]
+    yPts = warped_pts.T[1]
+    xPts = warped_pts.T[0]
 
-    pdb.set_trace()
-    # we may want to cut a 1-2 pts in case we can't index into the src/dest image for color sampling
-    print(i, src_img.shape, max(xSrcPts), max(ySrcPts))
-    xSrcPts, ySrcPts = getValidColorSamplePts(src_img, xSrcPts, ySrcPts)
-    xDestPts, yDestPts = getValidColorSamplePts(dest_img, xDestPts, yDestPts)
+    # xPts, yPts = getValidColorSamplePts(img, xPts, yPts)
     
-    warped_src_colors = src_img[ySrcPts, xSrcPts]
-    warped_dest_colors = dest_img[yDestPts, xDestPts]
-
-    warped_dissolved_colors = crossDisolve(warped_src_colors, warped_dest_colors, t)
+    warped_colors = img[yPts, xPts]
 
     warped_x_pts = tri_pts_without_ones.T[0]
     warped_y_pts = tri_pts_without_ones.T[1]
 
-    morphed_im[warped_y_pts, warped_x_pts] = warped_dissolved_colors
+    morphed_im[warped_y_pts, warped_x_pts] = warped_colors
 
   return morphed_im
 
@@ -255,6 +218,8 @@ def saveImg(morphedImg):
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
   morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + img_filename     # /facemorphs directory serves static content via nginx
   imageio.imwrite(morphed_img_path, morphedImg)
+  logging.info(img_filename)
+
   return morphed_img_uri
 
 def morph(img1, img2, t):
@@ -290,8 +255,12 @@ def morph(img1, img2, t):
 
 # small_im1_filename = 'morph/content/images/obama_small.jpg'
 # small_im2_filename = 'morph/content/images/george_small.jpg'
+
 # big_im1_filename = 'morph/content/images/obama_fit.jpg'
 # big_im2_filename = 'morph/content/images/clooney_fit.jpg'
+
+# big_im1_filename = 'morph/content/images/tiger_high.jpg'
+# big_im2_filename = 'morph/content/images/adele_high.jpg'
 
 # Load small images for regression testing
 # img1_filename = small_im1_filename
