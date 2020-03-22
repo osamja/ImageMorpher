@@ -220,7 +220,7 @@ def saveImg(morphedImg):
   log_message = str(datetime.datetime.now(timezone('UTC'))) + ': ' + img_filename 
   logging.info(log_message)
 
-  return morphed_img_uri
+  return img_filename
 
 def morph(img1, img2, t):
   """
@@ -247,9 +247,9 @@ def morph(img1, img2, t):
   ##
 
   morphed_im = crossDisolve(img1_warped, img2_warped, t)
-  morphed_img_uri = saveImg(morphed_im)
+  morphed_img_filename = saveImg(morphed_im)
   
-  return morphed_img_uri
+  return morphed_img_filename, morphed_im
 
 ###########################################################################################
 # TEMPORARY FOR LOCAL TESTING"
