@@ -62,7 +62,7 @@ def resizePts(pts1, pts2, compareLength=False):
   Resize the pts as a np array or length wise
 
   @TODO: Crop the center of the pts to increase the likelihood of retaining the face
-  in the img
+  in the img.  Or downsize both images at the beginning of the morph process
   """
   if (compareLength):
     if (len(pts1) != len(pts2)):
@@ -213,7 +213,9 @@ def getMorphSequence(img1_name, img2_name, t_step=0.2):
 
 def saveImg(morphedImg):
   fileHash = uuid.uuid4()
-  img_filename = fileHash.hex + '.jpg'
+  # pdb.set_trace()
+  morphDate = str(datetime.date.today())
+  img_filename = morphDate + fileHash.hex + '.jpg'
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
   morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + img_filename     # /facemorphs directory serves static content via nginx
   imageio.imwrite(morphed_img_path, morphedImg)
