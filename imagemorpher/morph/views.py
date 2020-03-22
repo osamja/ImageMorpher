@@ -48,8 +48,8 @@ def getMorphedImgUri(img1, img2, t):
     try:
         log_message = str(datetime.datetime.now(timezone('UTC'))) + ': Morphing images' 
         logging.info(log_message)
-        morphed_img_uri, morphed_im = morph(img1, img2, t)
-        return morphed_img_uri, morphed_im
+        morphed_img_filename, morphed_im = morph(img1, img2, t)
+        return morphed_img_filename, morphed_im
     except Exception as e:
         logging.error('Error %s', exc_info=e)
         raise
@@ -57,7 +57,6 @@ def getMorphedImgUri(img1, img2, t):
 
 @api_view(["POST"])
 def index(request):
-    # pdb.set_trace()
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
@@ -81,16 +80,29 @@ def index(request):
     stepSize = request.POST.get('stepSize')
     stepSize = int(stepSize) if stepSize != None else 0.2
 
-    morphSequenceTime = float(request.POST.get('t')) or 0.5
+    # duration for gif, the smaller the step size the smaller the duration that each frame in the 
+    # gif will be displayed
+    duration = 500 # temporary value which may be adjusted
+
+    morphSequenceTime = request.POST.get('t')
+    morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
     
     if (isMorphSequence):
+        # pdb.set_trace()
         morphed_img_uri_list = []
         for i in range(0, 101, stepSize):
-            i = float(i / 100) or 0
+            if i == 0:
+                morphed_img_uri_list.append((formData['Image-1'], img1)) # return src img
+                continue
+            if i >= 100:
+                # pdb.set_trace()
+                morphed_img_uri_list.append((formData['Image-2'], img2)) # return dest img
+                continue
+            t = float(i / 100) or 0
             _img1 = np.copy(img1)
             _img2 = np.copy(img2)
-            morphed_img_filename, morphed_im = getMorphedImgUri(_img1, _img2, i)
+            morphed_img_filename, morphed_im = getMorphedImgUri(_img1, _img2, t)
             morphed_img_uri_list.append((morphed_img_filename, morphed_im))
         
         
@@ -104,8 +116,18 @@ def index(request):
 
         morphed_im_list = []
         for i, im in enumerate(morphed_img_uri_list):
-            # if i == 0:
-            #     continue
+            if i == 0:
+                # load the uploaded img in memory
+                morphed_im = Image.open(im[0])
+                morphed_im_list.append(morphed_im)
+                continue
+            if i == len(morphed_img_uri_list) - 1:
+                # load uploaded img in memory
+                # pdb.set_trace()
+                morphed_im = Image.open(im[0])
+                morphed_im_list.append(morphed_im)
+                continue
+
             morphed_im_filename = 'morph/content/temp_morphed_images/' + im[0]
             morphed_im = Image.open(morphed_im_filename)
             morphed_im_list.append(morphed_im)
@@ -113,10 +135,11 @@ def index(request):
         appended_images = morphed_im_list[1:]
         # pdb.set_trace()
         # newGifImage = Image.new('RGB', morphed_img_uri_list[0][1].shape[:2], )
-        first_image.save(morphed_gif_path, save_all=True, append_images=appended_images, loop=0)
+        first_image.save(morphed_gif_path, save_all=True, append_images=appended_images, loop=0, duration=duration)
         return Response(morphed_gif_uri)
     else:
-        morphed_img_uri = getMorphedImgUri(img1, img2, morphSequenceTime)
+        morphed_img_filename, morphed_im = getMorphedImgUri(img1, img2, morphSequenceTime)
+        morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + morphed_img_filename   
         return Response(morphed_img_uri)
 
 
