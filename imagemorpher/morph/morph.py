@@ -223,7 +223,7 @@ def saveImg(morphedImg):
   return morphed_img_uri
 
 def morph(img1, img2, t):
-  """'
+  """
   Create morph from img1 to img2 at time t
   """
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
@@ -241,7 +241,7 @@ def morph(img1, img2, t):
   img1_warped = getWarpedImg(img1, img1_tri_to_point, T1_inv_dict, t)
   img2_warped = getWarpedImg(img2, img2_tri_to_point, T2_inv_dict, t)
 
-  ## for testing purposes only
+  ## for testing purposes only (test each img was warped properly)
   # saveImg(img1_warped)
   # saveImg(img2_warped)
   ##

@@ -54,6 +54,7 @@ def index(request):
     img2 = skio.imread(formData['Image-2'])
 
     # In case img is a PNG with a 4th transparency layer, remove this layer
+    # This is pretty hacky and may cause bugs; investigate later
     img1 = img1[:, :, :3]
     img2 = img2[:, :, :3] 
 
@@ -69,6 +70,13 @@ def index(request):
         logging.error('Error %s', exc_info=e)
         raise
     return Response('Sorry, there was an error processing your reqest')
+
+@api_view(["POST"])
+def logClientSideMorphError(request):
+    # @TODO: Improve logging here
+    logMessage = 'Client side error: ', str(request.body)
+    logging.info(str(logMessage))
+    return Response('front end error')
 
 @api_view(["GET"])
 def getIndex(request):
