@@ -7,6 +7,10 @@
 ### Start Django development server
 `python manage.py runserver 0:8000`
 
+## Unit Test
+* Shell into Image morpher docker container
+* Run `./manage.py test`
+
 ### 
 
 # Summer 2019:
