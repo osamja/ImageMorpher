@@ -154,7 +154,7 @@ def getWarpedImg(img, tri_dict, inv_transformation, t):
     warped_x_pts = warped_pts.T[0]
 
     if (len(warped_x_pts) == 0 or len(warped_y_pts) == 0):
-      print('no warped pts available')
+      print('no warped pts available for triangle #', i)
       continue
    
     try:
@@ -228,6 +228,7 @@ def morph(img1, img2, t):
   """
   Create morph from img1 to img2 at time t
   """
+  # pdb.set_trace()
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
 

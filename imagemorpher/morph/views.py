@@ -54,7 +54,6 @@ def getMorphedImgUri(img1, img2, t):
         logging.error('Error %s', exc_info=e)
         raise
 
-
 @api_view(["POST"])
 def index(request):
     if not isRequestValid(request):
