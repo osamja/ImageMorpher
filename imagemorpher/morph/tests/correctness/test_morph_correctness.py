@@ -7,6 +7,7 @@ from morph.morph import morph
 from skimage.measure import compare_ssim as ssim
 import imagehash
 from PIL import Image
+from utils.graphics import getFormattedImage
 
 """
 Test morph algorithm correctness
@@ -81,7 +82,7 @@ def getTestCases():
                 'morph/tests/content/input/tom-holland.png',
             ],
             "expected": [
-                'morph/tests/content/expected/george_obama_small.jpg',
+                'morph/tests/content/expected/will-smith-tom-holland.jpg',
             ],
         },
         # "largeFileTypes": {
@@ -114,9 +115,8 @@ class MorphTestCorrectness(TestCase):
         img1_path = current_test['input'][0]
         img2_path = current_test['input'][1]
         output_path = current_test['expected'][0]
-
-        img1 = skio.imread(img1_path)
-        img2 = skio.imread(img2_path)
+        img1 = getFormattedImage(img1_path)
+        img2 = getFormattedImage(img2_path)
 
         morphed_img_array = morph(img1, img2, 0.5)
         morphed_image = Image.fromarray(morphed_img_array[1])

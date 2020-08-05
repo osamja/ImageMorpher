@@ -23,6 +23,9 @@ import io
 from PIL import Image
 import numpy as np
 import sys
+from skimage import img_as_ubyte
+from utils.graphics import getFormattedImage
+
 # morph is essentially the src root directory in this file now
 #   aka import all files with morph/<file-path>
 sys.path.insert(0, '/app/imagemorpher/morph')
@@ -60,9 +63,9 @@ def index(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
     formData = request.FILES
-    
-    img1 = skio.imread(formData['Image-1'])
-    img2 = skio.imread(formData['Image-2'])
+
+    img1 = getFormattedImage(formData['Image-1'])
+    img2 = getFormattedImage(formData['Image-2'])
 
     # In case img is a PNG with a 4th transparency layer, remove this layer
     # This is pretty hacky and may cause bugs; investigate later
