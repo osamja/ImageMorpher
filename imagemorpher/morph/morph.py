@@ -35,7 +35,6 @@ def getDetectedCorrespondingPoints(img):
   detector = dlib.get_frontal_face_detector()
   predictor = dlib.shape_predictor('morph/utils/shape_predictor_68_face_landmarks.dat')
   # logging.info('detector: ', detector)
-  # pdb.set_trace()
   try:
     face = detector(img, 1)[0]      # get first face
   except Exception as e:
@@ -119,9 +118,9 @@ def getValidColorSamplePts(img, xPts, yPts):
   """
   num_rows, num_columns = img.shape[:2]
   if max(xPts) >= num_columns:
-    xPts = xPts[np.where(xPts != max(xPts))[0]]
+    xPts = xPts[np.where(xPts < num_columns)[0]]
   if  max(yPts) >= num_rows:
-    yPts = yPts[np.where(yPts != max(yPts))[0]]
+    yPts = yPts[np.where(yPts < num_rows)[0]]
 
   # trim pts to the min number since these are coordinates thus len(xPts) must equal len (yPts)
 
@@ -165,7 +164,6 @@ def getWarpedImg(img, tri_dict, inv_transformation, t):
       raise
 
     try:
-      # pdb.set_trace()
       img_pts = tri_dict[i]
       img_x_pts, img_y_pts = img_pts.T[0], img_pts.T[1]
       img_x_pts, img_y_pts = getValidColorSamplePts(morphed_im, img_x_pts, img_y_pts)
@@ -213,7 +211,6 @@ def getMorphSequence(img1_name, img2_name, t_step=0.2):
 
 def saveImg(morphedImg):
   fileHash = uuid.uuid4()
-  # pdb.set_trace()
   morphDate = str(datetime.date.today())
   img_filename = morphDate + fileHash.hex + '.jpg'
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
@@ -228,7 +225,6 @@ def morph(img1, img2, t):
   """
   Create morph from img1 to img2 at time t
   """
-  # pdb.set_trace()
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
 

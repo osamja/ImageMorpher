@@ -10,7 +10,7 @@
 
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:stage 
 # SHELL: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api:stage bash
-# docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
+# Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
 
 FROM ubuntu:18.04
 RUN apt-get update
@@ -40,9 +40,6 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     liblapack-dev \
     libswscale-dev \
-    # libsystemd-journal-dev \
-    # libsystemd-daemon-dev \
-    # libsystemd-dev \
     pkg-config \
     python-dev \
     python-numpy \
@@ -51,7 +48,6 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# @TODO: Uncomment once this step does not fail
 RUN pip install -r requirements.txt
 
 ENV PORT_NUM=8088
