@@ -4,9 +4,13 @@
 # django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
 # gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
 
-# BUILD IMAGE: [use SCREEN FIRST!]: docker build -t face-morpher-api:stage -f Dockerfile .
+# BUILD IMAGE: 
+#   Server: [use SCREEN FIRST!]: docker build -t face-morpher-api:stage -f Dockerfile .
+#   Local Mac: docker build -t face-morpher-api -f Dockerfile .
+
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api:stage 
 # SHELL: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api:stage bash
+# Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
 
 FROM ubuntu:18.04
 RUN apt-get update
@@ -21,7 +25,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-# this command was primarily copied for cmake
+# this command was primarily copied for cmake thats necessary for dlib
 RUN apt-get update && apt-get install -y \
     cmake \
     curl \
@@ -36,9 +40,6 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     liblapack-dev \
     libswscale-dev \
-    # libsystemd-journal-dev \
-    # libsystemd-daemon-dev \
-    # libsystemd-dev \
     pkg-config \
     python-dev \
     python-numpy \
@@ -47,7 +48,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN pip install -r requirements.txt --verbose
+RUN pip install -r requirements.txt
 
 ENV PORT_NUM=8088
 

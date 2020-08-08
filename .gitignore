@@ -8,4 +8,5 @@ imagemorpher/morph/temp_morphed_images/
 node_modules/
 imagemorpher/logs/
 imagemorpher/morph/content/
+.vscode/
 
