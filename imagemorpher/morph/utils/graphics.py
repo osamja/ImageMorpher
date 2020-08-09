@@ -56,7 +56,7 @@ def getImageReadyForCrop(img):
 
     return img
 
-def getFormattedImages(img1_path, img2_path):
+def getCroppedImages(img1_path, img2_path):
     """
     Return img1, img2 cropped and with similar dimensions for optimal results
     img1 may be a filepath string or a InMemoryUploadedFile

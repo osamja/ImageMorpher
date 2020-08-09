@@ -3,6 +3,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
+import uuid
+import datetime
+import imageio
+
+def saveImg(morphedImg):
+  fileHash = uuid.uuid4()
+  morphDate = str(datetime.date.today())
+  img_filename = morphDate + fileHash.hex + '.jpg'
+  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
+  imageio.imwrite(morphed_img_path, morphedImg)
+
+  return img_filename
 
 def getImages():
   dir_path = os.path.dirname(os.path.realpath(__file__)) + '/images'

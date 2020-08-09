@@ -6,18 +6,15 @@ import matplotlib.pyplot as plt
 from scipy.spatial import Delaunay
 from skimage.transform import resize
 import time
-import imageio
 import dlib
 import pdb
-import datetime
-import uuid
 from dotenv import load_dotenv
 load_dotenv()
 import sys
 # morph is essentially the src root directory in this file now
 #   aka import all files with morph/<file-path>
 sys.path.insert(0, '/app/imagemorpher/morph')
-from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints
+from utils.image_sources import getImages, getCorrespondingPts, addCornerPoints, saveImg
 
 import logging
 logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
@@ -208,18 +205,6 @@ def getMorphSequence(img1_name, img2_name, t_step=0.2):
     morph(img1_name, img2_name, t)
     t += t_step
   return "Morph sequence is complete"
-
-def saveImg(morphedImg):
-  fileHash = uuid.uuid4()
-  morphDate = str(datetime.date.today())
-  img_filename = morphDate + fileHash.hex + '.jpg'
-  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
-  morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + img_filename     # /facemorphs directory serves static content via nginx
-  imageio.imwrite(morphed_img_path, morphedImg)
-  log_message = str(datetime.datetime.now(timezone('UTC'))) + ': ' + img_filename 
-  logging.info(log_message)
-
-  return img_filename
 
 def morph(img1, img2, t):
   """
