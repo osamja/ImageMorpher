@@ -56,7 +56,7 @@ def getImageReadyForCrop(img):
 
     return img
 
-def getFormattedImages(img1_path, img2_path):
+def getCroppedImages(img1_path, img2_path):
     """
     Return img1, img2 cropped and with similar dimensions for optimal results
     img1 may be a filepath string or a InMemoryUploadedFile
@@ -66,13 +66,13 @@ def getFormattedImages(img1_path, img2_path):
     if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
         raise ValueError('Image file type is not supported: ')
 
-    img1 = Image.open(img1_path)
-    img2 = Image.open(img2_path)
+    pil_img1 = Image.open(img1_path)
+    pil_img2 = Image.open(img2_path)
 
     cropper = Cropper()
 
-    img1 = getImageReadyForCrop(img1)
-    img2 = getImageReadyForCrop(img2)
+    img1 = getImageReadyForCrop(pil_img1)
+    img2 = getImageReadyForCrop(pil_img2)
 
     img1_cropped = cropper.crop(img1)
     img2_cropped = cropper.crop(img2)
