@@ -73,7 +73,7 @@ def index(request):
     isMorphSequence = True if isMorphSequence == 'True' else False
 
     stepSize = request.POST.get('stepSize')
-    stepSize = int(stepSize) if stepSize != None else 0.2
+    stepSize = int(stepSize) if stepSize != None else 20
 
     # duration for gif, the smaller the step size the smaller the duration that each frame in the 
     # gif will be displayed
@@ -87,10 +87,11 @@ def index(request):
         morphed_img_uri_list = []
         for i in range(0, 101, stepSize):
             if i == 0:
+                pdb.set_trace()
                 morphed_img_uri_list.append((formData['Image-1'], img1)) # return src img
                 continue
             if i >= 100:
-                # pdb.set_trace()
+                pdb.set_trace()
                 morphed_img_uri_list.append((formData['Image-2'], img2)) # return dest img
                 continue
             t = float(i / 100) or 0
@@ -136,7 +137,6 @@ def index(request):
         morphed_img_filename, morphed_im = getMorphedImgUri(img1, img2, morphSequenceTime)
         morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + morphed_img_filename   
         return Response(morphed_img_uri)
-
 
 @api_view(["POST"])
 def logClientSideMorphError(request):
