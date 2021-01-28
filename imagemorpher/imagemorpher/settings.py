@@ -123,5 +123,5 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 ## @TODO: See if these settings can be disabled; revert back to False if issues
-# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True
 # CORS_ALLOW_CREDENTIALS = True
