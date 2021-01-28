@@ -8,6 +8,10 @@ import pdb
 import os
 from django.utils.text import get_valid_filename
 import cv2
+import base64
+from io import BytesIO
+import re
+import io
 
 # Plots the given points into vertices with edges.
 # ex. plotTri(tri, tri.points)
@@ -34,6 +38,9 @@ def plotDelauneyTesselation(tri, points):
     plt.show()
 
 def isImageTypeSupported(img_path):
+    if ('data:image/jpeg;base64' in img_path):
+        return True
+
     if (isinstance(img_path, str)):
         filename, file_extension = os.path.splitext(img_path)
     else: # assume in memory uploaded file
@@ -46,6 +53,13 @@ def isImageTypeSupported(img_path):
         return True
 
     return False
+
+def isBase64(s):
+    try:
+        return base64.b64encode(base64.b64decode(s)) == s
+    except Exception:
+        return False
+
 
 def getImageReadyForCrop(img):
     img = img_as_ubyte(img)
@@ -62,12 +76,23 @@ def getCroppedImages(img1_path, img2_path):
     img1 may be a filepath string or a InMemoryUploadedFile
     """
     # Note: WE CAN ONLY READ THE FILE ONCE!
-
+    
     if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
         raise ValueError('Image file type is not supported: ')
 
-    pil_img1 = Image.open(img1_path)
-    pil_img2 = Image.open(img2_path)
+    # pdb.set_trace()
+    # image_data =  
+    # img1_path = base64.b64decode((image_data))
+    # im = Image.open(BytesIO(base64.b64decode(img1_path)))
+    img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
+    img1_decoded = base64.b64decode(img1_stripped_b64)
+    Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
+    pil_img1 = Image.open('img1_bytes.jpg')
+
+    img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
+    img2_decoded = base64.b64decode(img2_stripped_b64)
+    Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
+    pil_img2 = Image.open('img2_bytes.jpg')
 
     cropper = Cropper()
 

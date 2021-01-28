@@ -1,11 +1,12 @@
 # ImageMorpher
-* This application exposes an API for morphing two faces together
+* This application exposes a public API for morphing two faces together
 * Built on top of the Django web framework
 * The ImageMorpher container is managed via docker-compose in the nginx proxy
 * Uses gunicorn as its WSGI
 
 ### Start Django development server
-`python manage.py runserver 0:8000`
+* Shell into Image morpher docker container
+* `python manage.py runserver 0:8000`
 
 ## Unit Test
 * Shell into Image morpher docker container

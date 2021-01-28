@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:
         isValidApiKey = request.headers['Authorization'] == Authorization
-        formData = request.FILES
+        formData = request.FILES or request.POST
         isImg1 = formData['Image-1']
         isImg2 = formData['Image-2']
         if (isValidApiKey and isImg1 and isImg2):
@@ -63,7 +63,7 @@ def index(request):
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
-    formData = request.FILES
+    formData = request.FILES or request.POST
 
     img1, img2 = getCroppedImages(formData['Image-1'], formData['Image-2'])
     img1_path = saveImg(img1)

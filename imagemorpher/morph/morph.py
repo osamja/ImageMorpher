@@ -239,28 +239,23 @@ def morph(img1, img2, t):
 # TEMPORARY FOR LOCAL TESTING"
 ###########################################################################################
 
-small_im1_filename = 'morph/content/images/obama_small.jpg'
-small_im2_filename = 'morph/content/images/george_small.jpg'
+img_filenames = [
+  'morph/content/images/obama_small.jpg',
+  'morph/content/images/george_small.jpg',
+  'morph/content/images/clooney_fit.jpg',
+  'morph/content/images/obama_fit.jpg',
+  'morph/content/images/harry.jpg',
+  'morph/content/images/ron.jpg',
+  'morph/content/images/cruise.jpg',
+  'morph/content/images/keanu.jpg',
+]
 
-# big_im1_filename = 'morph/content/images/obama_fit.jpg'
-big_im2_filename = 'morph/content/images/clooney_fit.jpg'
+# Load small images for regression testing, larger for performance
+img1_filename = img_filenames[0]
+img2_filename = img_filenames[1]
 
-# big_im1_filename = 'morph/content/images/harry.jpg'
-big_im2_filename = 'morph/content/images/ron.jpg'
-
-big_im1_filename = 'morph/content/images/cruise.jpg'
-# big_im2_filename = 'morph/content/images/keanu.jpg'
-
-# Load small images for regression testing
-img1_filename = small_im1_filename
-img2_filename = small_im2_filename
-
-# Load larger images for performance testing
-img1_filename = big_im1_filename
-img2_filename = big_im2_filename
-
-# img1 = sk.io.imread(img1_filename)
-# img2 = sk.io.imread(img2_filename)
-# log_message = 'Morphing ', (img1_filename, img2_filename)
-# logging.info(log_message)
-# morphed_img_uri = morph(img1, img2, 0.5)
+img1 = sk.io.imread(img1_filename)
+img2 = sk.io.imread(img2_filename)
+log_message = 'Morphing ', (img1_filename, img2_filename)
+logging.info(log_message)
+morphed_img_uri = morph(img1, img2, 0.5)
