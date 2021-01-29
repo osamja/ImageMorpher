@@ -70,6 +70,19 @@ def getImageReadyForCrop(img):
 
     return img
 
+
+"""
+# simple hack
+# on web, file type is InMemoryUploadedFile
+# on mobile, a base64 representation of the image is sent
+# TODO: Make base64 check more robust
+"""
+def isBase64Image(img_path):
+    if (type(img_path) == str):
+        return True
+
+    return False
+
 def getCroppedImages(img1_path, img2_path):
     """
     Return img1, img2 cropped and with similar dimensions for optimal results
@@ -80,19 +93,19 @@ def getCroppedImages(img1_path, img2_path):
     if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
         raise ValueError('Image file type is not supported: ')
 
-    # pdb.set_trace()
-    # image_data =  
-    # img1_path = base64.b64decode((image_data))
-    # im = Image.open(BytesIO(base64.b64decode(img1_path)))
-    img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
-    img1_decoded = base64.b64decode(img1_stripped_b64)
-    Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
-    pil_img1 = Image.open('img1_bytes.jpg')
+    if (isBase64Image(img1_path) and isBase64Image(img2_path)):
+        img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
+        img1_decoded = base64.b64decode(img1_stripped_b64)
+        Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
+        pil_img1 = Image.open('img1_bytes.jpg')
 
-    img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
-    img2_decoded = base64.b64decode(img2_stripped_b64)
-    Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
-    pil_img2 = Image.open('img2_bytes.jpg')
+        img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
+        img2_decoded = base64.b64decode(img2_stripped_b64)
+        Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
+        pil_img2 = Image.open('img2_bytes.jpg')
+    else:
+        pil_img1 = Image.open(img1_path)
+        pil_img2 = Image.open(img2_path)
 
     cropper = Cropper()
 

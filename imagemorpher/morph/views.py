@@ -60,10 +60,11 @@ def getMorphedImgUri(img1, img2, t):
 
 @api_view(["POST"])
 def index(request):
+    formData = request.FILES or request.POST
+    logging.info(request.__dict__)
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
-    formData = request.FILES or request.POST
 
     img1, img2 = getCroppedImages(formData['Image-1'], formData['Image-2'])
     img1_path = saveImg(img1)
