@@ -38,7 +38,7 @@ def plotDelauneyTesselation(tri, points):
     plt.show()
 
 def isImageTypeSupported(img_path):
-    if ('data:image/jpeg;base64' in img_path):
+    if (isBase64Image(img_path)):
         return True
 
     if (isinstance(img_path, str)):
@@ -53,13 +53,6 @@ def isImageTypeSupported(img_path):
         return True
 
     return False
-
-def isBase64(s):
-    try:
-        return base64.b64encode(base64.b64decode(s)) == s
-    except Exception:
-        return False
-
 
 def getImageReadyForCrop(img):
     img = img_as_ubyte(img)
@@ -79,7 +72,14 @@ def getImageReadyForCrop(img):
 """
 def isBase64Image(img_path):
     if (type(img_path) == str):
-        return True
+        if ('data:image/jpeg;base64' in img_path):
+            return True
+        
+        if ('/9j' in img_path):
+            return True
+
+        if (base64.b64encode(base64.b64decode(img_path)) == img_path):
+            return True
 
     return False
 
