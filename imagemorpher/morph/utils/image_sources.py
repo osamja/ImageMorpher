@@ -10,7 +10,7 @@ import imageio
 def saveImg(morphedImg):
   fileHash = uuid.uuid4()
   morphDate = str(datetime.date.today())
-  img_filename = morphDate + fileHash.hex + '.jpg'
+  img_filename = morphDate + '-' + fileHash.hex + '.jpg'
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
   imageio.imwrite(morphed_img_path, morphedImg)
 

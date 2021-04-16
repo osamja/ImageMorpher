@@ -27,7 +27,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['sammyjaved.com', '173.255.217.39', 'localhost', '127.0.0.1', 'face-morpher-api-server']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -122,6 +121,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-## @TODO: See if these settings can be disabled; revert back to False if issues
+## @TODO: See if these settings can be disabled
 CORS_ORIGIN_ALLOW_ALL = True
-# CORS_ALLOW_CREDENTIALS = True

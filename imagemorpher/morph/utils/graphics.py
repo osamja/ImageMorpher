@@ -7,6 +7,7 @@ import imageio
 import pdb
 import os
 from django.utils.text import get_valid_filename
+from django.http import HttpResponse
 import cv2
 import base64
 from io import BytesIO
@@ -78,8 +79,8 @@ def isBase64Image(img_path):
         if ('/9j' in img_path):
             return True
 
-        if (base64.b64encode(base64.b64decode(img_path)) == img_path):
-            return True
+        # if (base64.b64encode(base64.b64decode(img_path)) == img_path):
+        #     return True
 
     return False
 
@@ -89,38 +90,41 @@ def getCroppedImages(img1_path, img2_path):
     img1 may be a filepath string or a InMemoryUploadedFile
     """
     # Note: WE CAN ONLY READ THE FILE ONCE!
-    
-    if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
-        raise ValueError('Image file type is not supported: ')
 
-    if (isBase64Image(img1_path) and isBase64Image(img2_path)):
-        img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
-        img1_decoded = base64.b64decode(img1_stripped_b64)
-        Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
-        pil_img1 = Image.open('img1_bytes.jpg')
+    try:
+        if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
+            raise ValueError('Image file type is not supported: ')
 
-        img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
-        img2_decoded = base64.b64decode(img2_stripped_b64)
-        Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
-        pil_img2 = Image.open('img2_bytes.jpg')
-    else:
-        pil_img1 = Image.open(img1_path)
-        pil_img2 = Image.open(img2_path)
+        if (isBase64Image(img1_path) and isBase64Image(img2_path)):
+            img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
+            img1_decoded = base64.b64decode(img1_stripped_b64)
+            Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
+            pil_img1 = Image.open('img1_bytes.jpg')
 
-    cropper = Cropper()
+            img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
+            img2_decoded = base64.b64decode(img2_stripped_b64)
+            Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
+            pil_img2 = Image.open('img2_bytes.jpg')
+        else:
+            pil_img1 = Image.open(img1_path)
+            pil_img2 = Image.open(img2_path)
 
-    img1 = getImageReadyForCrop(pil_img1)
-    img2 = getImageReadyForCrop(pil_img2)
+        cropper = Cropper()
 
-    img1_cropped = cropper.crop(img1)
-    img2_cropped = cropper.crop(img2)
+        img1 = getImageReadyForCrop(pil_img1)
+        img2 = getImageReadyForCrop(pil_img2)
 
-    img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
-    img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
+        img1_cropped = cropper.crop(img1)
+        img2_cropped = cropper.crop(img2)
 
-    # For debugging purposes only, compare uncropped vs cropped image for color inspection
-    # imageio.imwrite('img1.jpg', img1)
-    # imageio.imwrite('img2.jpg', img2)
-    # imageio.imwrite('img1_cropped.jpg', img1_cropped_cv)
-    # imageio.imwrite('img2_cropped.jpg', img2_cropped_cv)
+        img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
+        img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
+
+        # For debugging purposes only, compare uncropped vs cropped image for color inspection
+        # imageio.imwrite('img1.jpg', img1)
+        # imageio.imwrite('img2.jpg', img2)
+        # imageio.imwrite('img1_cropped.jpg', img1_cropped_cv)
+        # imageio.imwrite('img2_cropped.jpg', img2_cropped_cv)
+    except Exception as e:
+        return HttpResponse('Sorry we had issues cropping the images', status=422)
     return img1_cropped_cv, img2_cropped_cv

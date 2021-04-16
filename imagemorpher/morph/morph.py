@@ -251,11 +251,11 @@ img_filenames = [
 ]
 
 # Load small images for regression testing, larger for performance
-img1_filename = img_filenames[0]
-img2_filename = img_filenames[1]
+# img1_filename = img_filenames[0]
+# img2_filename = img_filenames[1]
 
-img1 = sk.io.imread(img1_filename)
-img2 = sk.io.imread(img2_filename)
-log_message = 'Morphing ', (img1_filename, img2_filename)
-logging.info(log_message)
-morphed_img_uri = morph(img1, img2, 0.5)
+# img1 = sk.io.imread(img1_filename)
+# img2 = sk.io.imread(img2_filename)
+# log_message = 'Morphing ', (img1_filename, img2_filename)
+# logging.info(log_message)
+# morphed_img_uri = morph(img1, img2, 0.5)

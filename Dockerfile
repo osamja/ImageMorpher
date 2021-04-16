@@ -9,8 +9,12 @@
 #   Local Mac: docker build -t face-morpher-api -f Dockerfile .
 
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api
-# SHELL: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
+
 # Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
+
+# Dev Server: (Shell into container then start server)
+# docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
+# python manage.py runserver 0:8088 # development server
 
 FROM ubuntu:18.04
 RUN apt-get update
@@ -52,6 +56,4 @@ RUN pip install -r requirements.txt
 
 ENV PORT_NUM=8088
 
-# CMD ["python", "manage.py", "runserver", PORT_NUM]
-# CMD python manage.py runserver 0:8088
-# python manage.py runserver 0:8088 # development server
+
