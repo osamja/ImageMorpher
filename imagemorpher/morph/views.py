@@ -62,8 +62,7 @@ def getMorphedImgUri(img1, img2, t):
 def index(request):
     # pdb.set_trace()
     formData = request.FILES or request.POST
-    # Find more efficient way to log important params
-    # logging.info(request.__dict__)
+
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)

@@ -123,3 +123,7 @@ STATIC_URL = '/static/'
 
 ## @TODO: See if these settings can be disabled
 CORS_ORIGIN_ALLOW_ALL = True
+
+# https://stackoverflow.com/questions/41408359/requestdatatoobig-request-body-exceeded-settings-data-upload-max-memory-size
+# be able to upload 5MB images
+DATA_UPLOAD_MAX_MEMORY_SIZE=5242880
