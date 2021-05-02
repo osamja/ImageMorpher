@@ -104,7 +104,7 @@ def index(request):
         
         fileHash = uuid.uuid4()
         morphDate = str(datetime.date.today())
-        gif_filename = morphDate + fileHash.hex + '.gif'
+        gif_filename = morphDate + '-' + fileHash.hex + '.gif'
         morphed_gif_path = 'morph/content/temp_morphed_images/' + gif_filename    # location of saved image
         morphed_gif_uri = 'https://sammyjaved.com/facemorphs/' + gif_filename     # /facemorphs directory serves static content via nginx
 
