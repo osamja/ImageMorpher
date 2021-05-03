@@ -125,5 +125,7 @@ STATIC_URL = '/static/'
 CORS_ORIGIN_ALLOW_ALL = True
 
 # https://stackoverflow.com/questions/41408359/requestdatatoobig-request-body-exceeded-settings-data-upload-max-memory-size
+# https://zoejoyuliao.medium.com/the-problem-you-may-face-when-you-upload-a-big-file-to-a-nginx-django-application-413-request-4ae9b50874a5
 # be able to upload 5MB images
 DATA_UPLOAD_MAX_MEMORY_SIZE=5242880
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880 # 5 MB

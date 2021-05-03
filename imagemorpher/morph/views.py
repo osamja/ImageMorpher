@@ -6,8 +6,8 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import JsonResponse
 from django.core import serializers
+from django.core.exceptions import RequestDataTooBig
 from django.conf import settings
 from django.utils.html import escape
 
@@ -24,8 +24,9 @@ from PIL import Image
 import numpy as np
 import sys
 from skimage import img_as_ubyte
-from utils.graphics import getCroppedImages
+from utils.graphics import getCroppedImagePath, getCroppedImageFromPath
 from utils.image_sources import saveImg
+from exceptions.CropException import CropException
 
 # morph is essentially the src root directory in this file now
 #   aka import all files with morph/<file-path>
@@ -40,8 +41,8 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:
         isValidApiKey = request.headers['Authorization'] == Authorization
         formData = request.FILES or request.POST
-        isImg1 = formData['Image-1']
-        isImg2 = formData['Image-2']
+        isImg1 = formData['firstImageRef']
+        isImg2 = formData['secondImageRef']
         if (isValidApiKey and isImg1 and isImg2):
             return True
         return False
@@ -60,16 +61,16 @@ def getMorphedImgUri(img1, img2, t):
 
 @api_view(["POST"])
 def index(request):
-    # pdb.set_trace()
     formData = request.FILES or request.POST
 
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
 
-    img1, img2 = getCroppedImages(formData['Image-1'], formData['Image-2'])
-    img1_path = saveImg(img1)
-    img2_path = saveImg(img2)
+    img1_path = formData['firstImageRef']
+    img2_path = formData['secondImageRef']
+    img1 = getCroppedImageFromPath(img1_path)
+    img2 = getCroppedImageFromPath(img2_path)
 
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
@@ -141,6 +142,27 @@ def logClientSideMorphError(request):
     logMessage = 'Client side error: ', str(request.body)
     logging.info(str(logMessage))
     return Response('front end error')
+
+@api_view(["POST"])
+def uploadMorphImage(request):
+    try:
+        formData = request.FILES or request.POST
+        img = formData.get('firstImageRef', False)
+        cropped_img_path = getCroppedImagePath(img)
+    except CropException as e:
+        logging.error(e)
+        errorMessage = str(e)
+        return Response(errorMessage, status=422)
+    except RequestDataTooBig as e:
+        logging.error(e)
+        errorMessage = 'Image too large'
+        return Response(errorMessage, status=422)
+    except Exception as e:
+        logging.error(e)
+        errorMessage = 'Could not crop image'
+        return Response(errorMessage, status=422)
+
+    return Response(cropped_img_path)
 
 @api_view(["GET"])
 def getIndex(request):
