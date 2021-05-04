@@ -1,3 +1,8 @@
+import sys
+# morph is essentially the src root directory in this file now
+#   aka import all files with morph/<file-path>
+sys.path.insert(0, '/app/imagemorpher/morph')
+
 import matplotlib.pyplot as plt
 from skimage import img_as_ubyte
 import skimage.io as skio
@@ -13,6 +18,13 @@ import base64
 from io import BytesIO
 import re
 import io
+import uuid
+import datetime
+
+from exceptions.CropException import CropException
+
+import logging
+logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
 
 # Plots the given points into vertices with edges.
 # ex. plotTri(tri, tri.points)
@@ -84,47 +96,48 @@ def isBase64Image(img_path):
 
     return False
 
-def getCroppedImages(img1_path, img2_path):
+def getCroppedImagePath(img):
     """
-    Return img1, img2 cropped and with similar dimensions for optimal results
-    img1 may be a filepath string or a InMemoryUploadedFile
+    Given an image, returns img path where cropped file has been saved
+    img may be a filepath string or a InMemoryUploadedFile
     """
-    # Note: WE CAN ONLY READ THE FILE ONCE!
+    if (not(img)):
+        raise CropException('No image provided')
 
-    try:
-        if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
-            raise ValueError('Image file type is not supported: ')
+    if (not (isImageTypeSupported(img))):
+        raise CropException('File type not supported')
 
-        if (isBase64Image(img1_path) and isBase64Image(img2_path)):
-            img1_stripped_b64 = re.sub('^data:image/.+;base64,', '', img1_path)
-            img1_decoded = base64.b64decode(img1_stripped_b64)
-            Image.open(io.BytesIO(img1_decoded)).save('img1_bytes.jpg')
-            pil_img1 = Image.open('img1_bytes.jpg')
+    morphDate = str(datetime.date.today())
+    fileHash = uuid.uuid4()
+    img_filename = morphDate + '-' + fileHash.hex + '.jpg'
+    morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
 
-            img2_stripped_b64 = re.sub('^data:image/.+;base64,', '', img2_path)
-            img2_decoded = base64.b64decode(img2_stripped_b64)
-            Image.open(io.BytesIO(img2_decoded)).save('img2_bytes.jpg')
-            pil_img2 = Image.open('img2_bytes.jpg')
-        else:
-            pil_img1 = Image.open(img1_path)
-            pil_img2 = Image.open(img2_path)
+    if (isBase64Image(img)):
+        img_stripped_b64 = re.sub('^data:image/.+;base64,', '', img)
+        img_decoded = base64.b64decode(img_stripped_b64)
 
-        cropper = Cropper()
+        Image.open(io.BytesIO(img_decoded)).convert('RGB').save(morphed_img_path)
+        pil_img = Image.open(morphed_img_path)
+    else:
+        pil_img = Image.open(img)
 
-        img1 = getImageReadyForCrop(pil_img1)
-        img2 = getImageReadyForCrop(pil_img2)
+    cropper = Cropper()
 
-        img1_cropped = cropper.crop(img1)
-        img2_cropped = cropper.crop(img2)
+    img = getImageReadyForCrop(pil_img)
 
-        img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
-        img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
+    img_cropped = cropper.crop(img)
 
-        # For debugging purposes only, compare uncropped vs cropped image for color inspection
-        # imageio.imwrite('img1.jpg', img1)
-        # imageio.imwrite('img2.jpg', img2)
-        # imageio.imwrite('img1_cropped.jpg', img1_cropped_cv)
-        # imageio.imwrite('img2_cropped.jpg', img2_cropped_cv)
-    except Exception as e:
-        return HttpResponse('Sorry we had issues cropping the images', status=422)
-    return img1_cropped_cv, img2_cropped_cv
+    img_cropped_cv = cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB)
+
+    # For debugging purposes only, compare uncropped vs cropped image for color inspection
+    # imageio.imwrite('img1.jpg', img1)
+    # imageio.imwrite('img1_cropped.jpg', img1_cropped_cv)
+
+    imageio.imwrite(morphed_img_path, img_cropped_cv)
+
+    return img_filename
+
+def getCroppedImageFromPath(img_path):
+    morphed_img_path = 'morph/content/temp_morphed_images/' + img_path    # location of saved image
+    img = skio.imread(morphed_img_path)
+    return img
