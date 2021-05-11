@@ -26,6 +26,7 @@ import sys
 from skimage import img_as_ubyte
 from utils.graphics import getCroppedImagePath, getCroppedImageFromPath
 from utils.image_sources import saveImg
+from utils.date import getMorphDate
 from exceptions.CropException import CropException
 
 # morph is essentially the src root directory in this file now
@@ -67,8 +68,8 @@ def index(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
 
-    img1_path = formData['firstImageRef']
-    img2_path = formData['secondImageRef']
+    img1_path = formData['firstImageRef']       # e.g. 2021-07-31-18-46-33-232174-b19ac14523fb4f5fb69dafa86ff97e6f.jpg
+    img2_path = formData['secondImageRef']      #
     img1 = getCroppedImageFromPath(img1_path)
     img2 = getCroppedImageFromPath(img2_path)
 
@@ -104,7 +105,7 @@ def index(request):
             morphed_img_uri_list.append((morphed_img_filename, morphed_im))
         
         fileHash = uuid.uuid4()
-        morphDate = str(datetime.date.today())
+        morphDate = getMorphDate()
         gif_filename = morphDate + '-' + fileHash.hex + '.gif'
         morphed_gif_path = 'morph/content/temp_morphed_images/' + gif_filename    # location of saved image
         morphed_gif_uri = 'https://sammyjaved.com/facemorphs/' + gif_filename     # /facemorphs directory serves static content via nginx

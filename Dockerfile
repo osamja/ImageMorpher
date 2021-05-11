@@ -12,9 +12,11 @@
 
 # Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
 
-# Dev Server: (Shell into container then start server)
-# docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
-# python manage.py runserver 0:8088 # development server
+# Dev Server: (Shell into container then start dev server)
+#   docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
+#   cd imagemorpher;
+#   python manage.py runserver 0:8088
+#
 
 # To update production with latest code changes
 #   SSH into server, enter screen session running docker-compose
