@@ -20,6 +20,7 @@ import re
 import io
 import uuid
 import datetime
+from utils.date import getMorphDate
 
 from exceptions.CropException import CropException
 
@@ -107,7 +108,7 @@ def getCroppedImagePath(img):
     if (not (isImageTypeSupported(img))):
         raise CropException('File type not supported')
 
-    morphDate = str(datetime.date.today())
+    morphDate = getMorphDate()
     fileHash = uuid.uuid4()
     img_filename = morphDate + '-' + fileHash.hex + '.jpg'
     morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image

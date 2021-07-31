@@ -1,3 +1,8 @@
+import sys
+# morph is essentially the src root directory in this file now
+#   aka import all files with morph/<file-path>
+sys.path.insert(0, '/app/imagemorpher/morph')
+
 import skimage.io as skio
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,9 +12,11 @@ import uuid
 import datetime
 import imageio
 
+from utils.date import getMorphDate
+
 def saveImg(morphedImg):
   fileHash = uuid.uuid4()
-  morphDate = str(datetime.date.today())
+  morphDate = getMorphDate()
   img_filename = morphDate + '-' + fileHash.hex + '.jpg'
   morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
   imageio.imwrite(morphed_img_path, morphedImg)
