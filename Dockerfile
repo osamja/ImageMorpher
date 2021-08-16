@@ -16,10 +16,13 @@
 #   docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
 #   cd imagemorpher;
 #   python manage.py runserver 0:8088
-#
+# Then use Postman collection
 
 # To update production with latest code changes
 #   SSH into server, enter screen session running docker-compose
+#       screen -ls              # view existing screen sessions
+#       screen -r <session-id>  # attach to existing screen
+#       Control + a + d         # Run screen as background process
 #   docker-compose down; docker-compose up
 #   Since the morph container references the volume, as long as the files are updated on the server; that will be served to the user
 
