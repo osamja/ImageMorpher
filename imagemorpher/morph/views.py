@@ -60,6 +60,7 @@ def getMorphedImgUri(img1, img2, t):
 
 @api_view(["POST"])
 def index(request):
+    # pdb.set_trace()
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)

@@ -63,6 +63,8 @@ def getCroppedImages(img1_path, img2_path):
     """
     # Note: WE CAN ONLY READ THE FILE ONCE!
 
+    pdb.set_trace()
+
     if (not (isImageTypeSupported(img1_path) and isImageTypeSupported(img2_path))):
         raise ValueError('Image file type is not supported: ')
 
@@ -76,6 +78,17 @@ def getCroppedImages(img1_path, img2_path):
 
     img1_cropped = cropper.crop(img1)
     img2_cropped = cropper.crop(img2)
+
+    # iphone has some pictures rotated, the crop fails on these rotated images
+    # if crop returns None, used uncropped img
+    if (img1_cropped == None):
+        img1_cropped = img1
+    if (img2_cropped == None):
+        img2_cropped = img2
+
+    # For debugging purposes only, compare uncropped vs cropped image for color inspection
+    imageio.imwrite('img1.jpg', img1_cropped)
+    imageio.imwrite('img2.jpg', img2_cropped)
 
     img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
     img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
