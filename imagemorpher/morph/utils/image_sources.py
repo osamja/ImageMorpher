@@ -23,6 +23,10 @@ def saveImg(morphedImg):
 
   return img_filename
 
+def deleteImg(filename):
+  img_path = 'morph/content/temp_morphed_images/' + filename
+  os.remove(img_path)
+
 def getImages():
   dir_path = os.path.dirname(os.path.realpath(__file__)) + '/images'
   adele_low_res = skio.imread(dir_path + '/adele_2.jpg')

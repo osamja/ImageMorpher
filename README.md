@@ -26,3 +26,14 @@ Going to try to refactor this code, then maybe try to port it to the web
 * Apply T' to all pixels in target triangle to find the transformed warped triangle
 * Keep doing this for steps in t
 * How does inverse warping work?
+
+# Privacy
+* To delete all images for a certain month we can use the following command.  Note: This deletes all filenames that begin with 2021-11, aka files that were created in november of 2021. 
+`cd /home/sammy/ImageMorpher/imagemorpher/morph/content/temp_morphed_images`
+
+# delete files for a given month
+`find . -type f -name "2021-11*" -delete`
+
+# count number of files
+`find . -type f -name "2022-03*" | wc -l`
+
