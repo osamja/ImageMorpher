@@ -37,3 +37,5 @@ Going to try to refactor this code, then maybe try to port it to the web
 # count number of files
 `find . -type f -name "2022-03*" | wc -l`
 
+# cron tab to automatically delete old files
+See `auto_delete.py`
