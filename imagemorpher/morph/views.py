@@ -12,22 +12,20 @@ from django.conf import settings
 from django.utils.html import escape
 
 import datetime
+import os
 from pytz import timezone
-import json
-import pdb
 import uuid
-import skimage.io as skio
 from .morph import morph
-import base64
-import io
 from PIL import Image
 import numpy as np
 import sys
 from skimage import img_as_ubyte
 from utils.graphics import getCroppedImagePath, getCroppedImageFromPath
-from utils.image_sources import saveImg
+from utils.image_sources import saveImg, deleteImg
 from utils.date import getMorphDate
 from exceptions.CropException import CropException
+
+# import pdb
 
 # morph is essentially the src root directory in this file now
 #   aka import all files with morph/<file-path>
@@ -91,13 +89,8 @@ def index(request):
     
     if (isMorphSequence):
         morphed_img_uri_list = []
+
         for i in range(0, 101, stepSize):
-            if i == 0:
-                morphed_img_uri_list.append((img1_path, img1)) # return src img
-                continue
-            if i >= 100:
-                morphed_img_uri_list.append((img2_path, img2)) # return dest img
-                continue
             t = float(i / 100) or 0
             _img1 = np.copy(img1)
             _img2 = np.copy(img2)
@@ -112,29 +105,28 @@ def index(request):
 
         morphed_im_list = []
         for i, im in enumerate(morphed_img_uri_list):
-            if i == 0:
-                # load the uploaded img in memory
-                morphed_im_filename = 'morph/content/temp_morphed_images/' + im[0]
-                morphed_im = Image.open(morphed_im_filename)
-                morphed_im_list.append(morphed_im)
-                continue
-            if i == len(morphed_img_uri_list) - 1:
-                # load uploaded img in memory
-                morphed_im_filename = 'morph/content/temp_morphed_images/' + im[0]
-                morphed_im = Image.open(morphed_im_filename)
-                morphed_im_list.append(morphed_im)
-                continue
-
             morphed_im_filename = 'morph/content/temp_morphed_images/' + im[0]
             morphed_im = Image.open(morphed_im_filename)
             morphed_im_list.append(morphed_im)
         first_image = morphed_im_list[0]
         appended_images = morphed_im_list[1:]
         first_image.save(morphed_gif_path, save_all=True, append_images=appended_images, loop=0, duration=duration)
+
+        # Remove all generated jpgs except the GIF
+        for i, im in enumerate(morphed_img_uri_list):
+            img_filename = 'morph/content/temp_morphed_images/' + im[0]
+            os.remove(img_filename)
+
+        # Delete the originally uploaded photos
+        deleteImg(img1_path)
+        deleteImg(img2_path)
+
         return Response(morphed_gif_uri)
     else:
         morphed_img_filename, morphed_im = getMorphedImgUri(img1, img2, morphSequenceTime)
-        morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + morphed_img_filename   
+        morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + morphed_img_filename
+        deleteImg(img1_path)
+        deleteImg(img2_path)
         return Response(morphed_img_uri)
 
 @api_view(["POST"])
