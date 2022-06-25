@@ -62,14 +62,19 @@ def getMorphedImgUri(img1, img2, t):
 def index(request):
     formData = request.FILES or request.POST
 
+
+
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
 
     img1_path = formData['firstImageRef']       # e.g. 2021-07-31-18-46-33-232174-b19ac14523fb4f5fb69dafa86ff97e6f.jpg
     img2_path = formData['secondImageRef']      #
+    # pdb.set_trace()
     img1 = getCroppedImageFromPath(img1_path)
     img2 = getCroppedImageFromPath(img2_path)
+
+
 
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
@@ -82,7 +87,7 @@ def index(request):
 
     # duration for gif, the smaller the step size the smaller the duration that each frame in the 
     # gif will be displayed
-    duration = 500 # temporary value which may be adjusted
+    duration = 10 # temporary value which may be adjusted
 
     morphSequenceTime = request.POST.get('t')
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
@@ -115,11 +120,11 @@ def index(request):
         # Remove all generated jpgs except the GIF
         for i, im in enumerate(morphed_img_uri_list):
             img_filename = 'morph/content/temp_morphed_images/' + im[0]
-            os.remove(img_filename)
+            # os.remove(img_filename)
 
         # Delete the originally uploaded photos
-        deleteImg(img1_path)
-        deleteImg(img2_path)
+        # deleteImg(img1_path)
+        # deleteImg(img2_path)
 
         return Response(morphed_gif_uri)
     else:

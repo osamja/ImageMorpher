@@ -4,16 +4,13 @@
 # CRON tab that runs this script every 24 hours
 # crontab -e (for initiating crontab file)
 # crontab -l for viewing cron tasks
-# 0 0 * * * /usr/bin/python /home/sammy/ImageMorpher/imagemorpher/morph/utils/auto_delete.py >/dev/null 2>&1
+# 0 0 * * * /usr/bin/python /home/sammy/ImageMorpher/imagemorpher/morph/utils/auto_delete.py >> /home/sammy/ImageMorpher/imagemorpher/morph/logs/auto-delete-cron.log 2>&1
 
 """
-Algorithm
-
-#   Get current month-year
-#   Go one month back (if 1 => 12) 
-#   Get list of files from previous month (Hmm we'll need to use something like find)
-#       remove each file (os.remove)
-#   Run crontab on server executing this python script
+Algorithm:
+For each file in our directory of saved morphed imgs
+    if file older than 30 days
+        delete file
 """
 
 import os
@@ -24,10 +21,11 @@ def get_date_x_days_ago(x_days_ago, date_from=None):
     return datetime.strptime(date_from, '%Y-%m-%d').date() - timedelta(x_days_ago) if date_from else date.today()-timedelta(x_days_ago)
 
 # change to directory where morphed images are stored
-os.chdir('/home/sammy/ImageMorpher/imagemorpher/morph/content/temp_morphed_images')
+path_of_saved_morphs = '/home/sammy/ImageMorpher/imagemorpher/morph/content/temp_morphed_images'
+os.chdir(path_of_saved_morphs)
 
 # get list of all filenames
-morphed_filenames = os.listdir()
+morphed_filenames = os.listdir(path_of_saved_morphs)
 
 # get current year-month
 today = time.strftime("%Y-%m-%d")
@@ -36,5 +34,8 @@ today = time.strftime("%Y-%m-%d")
 previous_date = datetime.strftime(get_date_x_days_ago(x_days_ago=30, date_from=today), "%Y-%m-%d")
 
 for morphed_filename in morphed_filenames:
-    if morphed_filename.startswith(previous_date):
+    morphed_file_date = datetime.strptime(morphed_filename[:10], "%Y-%m-%d")
+    previous_date_obj = datetime.strptime(previous_date, "%Y-%m-%d")
+    
+    if morphed_file_date < previous_date_obj:
         os.remove(morphed_filename)
