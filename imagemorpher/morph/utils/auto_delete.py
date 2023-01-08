@@ -31,7 +31,7 @@ morphed_filenames = os.listdir(path_of_saved_morphs)
 today = time.strftime("%Y-%m-%d")
 
 # get date 30 days ago
-previous_date = datetime.strftime(get_date_x_days_ago(x_days_ago=30, date_from=today), "%Y-%m-%d")
+previous_date = datetime.strftime(get_date_x_days_ago(x_days_ago=3, date_from=today), "%Y-%m-%d")
 
 for morphed_filename in morphed_filenames:
     morphed_file_date = datetime.strptime(morphed_filename[:10], "%Y-%m-%d")
