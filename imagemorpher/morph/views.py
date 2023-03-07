@@ -62,8 +62,6 @@ def getMorphedImgUri(img1, img2, t):
 def index(request):
     formData = request.FILES or request.POST
 
-
-
     if not isRequestValid(request):
         logging.info('request is not valid')
         return HttpResponse('Invalid Request', status=401)
@@ -73,8 +71,6 @@ def index(request):
     # pdb.set_trace()
     img1 = getCroppedImageFromPath(img1_path)
     img2 = getCroppedImageFromPath(img2_path)
-
-
 
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
@@ -106,7 +102,7 @@ def index(request):
         morphDate = getMorphDate()
         gif_filename = morphDate + '-' + fileHash.hex + '.gif'
         morphed_gif_path = 'morph/content/temp_morphed_images/' + gif_filename    # location of saved image
-        morphed_gif_uri = 'https://sammyjaved.com/facemorphs/' + gif_filename     # /facemorphs directory serves static content via nginx
+        morphed_gif_uri = 'https://pyaar.ai/facemorphs/' + gif_filename     # /facemorphs directory serves static content via nginx
 
         morphed_im_list = []
         for i, im in enumerate(morphed_img_uri_list):
@@ -129,7 +125,7 @@ def index(request):
         return Response(morphed_gif_uri)
     else:
         morphed_img_filename, morphed_im = getMorphedImgUri(img1, img2, morphSequenceTime)
-        morphed_img_uri = 'https://sammyjaved.com/facemorphs/' + morphed_img_filename
+        morphed_img_uri = 'https://pyaar.ai/facemorphs/' + morphed_img_filename
         deleteImg(img1_path)
         deleteImg(img2_path)
         return Response(morphed_img_uri)

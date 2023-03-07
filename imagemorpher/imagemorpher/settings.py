@@ -25,7 +25,14 @@ SECRET_KEY = '_y=txkglsrdze@c$ebu#&_$yukmvc)wwjjq8$sm4m)ebpj@0*$'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['sammyjaved.com', '173.255.217.39', 'localhost', '127.0.0.1', 'face-morpher-api-server']
+ALLOWED_HOSTS = [
+    'sammyjaved.com',
+    '173.255.217.39',
+    'localhost',
+    '127.0.0.1',
+    'face-morpher-api-server',
+    'pyaar.ai'
+    ]
 
 # Application definition
 
