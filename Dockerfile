@@ -10,9 +10,12 @@
 
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api
 
+# SHELL INTO CONTAINER:
+#   Server: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
+
 # Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
 
-# Dev Server: (Shell into container then start dev server)
+# Dev Server: 
 #   docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
 #   cd imagemorpher;
 #   python manage.py runserver 0:8088

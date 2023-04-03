@@ -12,6 +12,13 @@
 * Shell into Image morpher docker container
 * Run `./manage.py test`
 
+## Redis
+- Start a Redis container by running the following command:
+`docker run --name my-redis-container -d redis`
+
+- Interact with the Redis container using the redis-cli command. To connect to the Redis server running inside the container, run the following command:
+`docker exec -it my-redis-container redis-cli`
+
 ### 
 
 # Summer 2019:
