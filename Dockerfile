@@ -5,7 +5,7 @@
 # gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
 
 # BUILD IMAGE: 
-#   Server: [use SCREEN FIRST!]: docker build -t face-morpher-api -f Dockerfile .
+#   Server: [use SCREEN FIRST!]: docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
 #   Local Mac: docker build -t face-morpher-api -f Dockerfile .
 
 # RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api
