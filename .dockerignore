@@ -1,1 +1,6 @@
+# Ignore files and directories with the following patterns:
+**/*.pyc
+**/__pycache__
 .git
+.vscode
+imagemorpher/morph/content/**
