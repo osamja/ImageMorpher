@@ -1,34 +1,3 @@
-# https://blog.realkinetic.com/building-minimal-docker-containers-for-python-applications-37d0272c52f3
-# Elegantly activating a virtualenv in a Dockerfile https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-# Python 2.7 + dlib: https://hub.docker.com/r/cameronmaske/dlib/dockerfile
-# django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
-# gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
-
-# BUILD IMAGE: 
-#   Server: [use SCREEN FIRST!]: docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
-#   Local Mac: docker build -t face-morpher-api -f Dockerfile .
-
-# RUN CONTAINER: docker run -p 8088:8088 --rm face-morpher-api
-
-# SHELL INTO CONTAINER:
-#   Server: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
-
-# Local Mac: docker container run -it -p 8088:8088 -v /Users/sjaved/projects/personal/ImageMorpher:/app face-morpher-api bash
-
-# Dev Server: 
-#   docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash
-#   cd imagemorpher;
-#   python manage.py runserver 0:8088
-# Then use Postman collection to call endpoints
-
-# To update production with latest code changes
-#   SSH into server, enter screen session running docker-compose
-#       screen -ls              # view existing screen sessions
-#       screen -r <session-id>  # attach to existing screen
-#       Control + a + d         # Run screen as background process
-#   docker-compose down; docker-compose up
-#   Since the morph container references the volume, as long as the files are updated on the server; that will be served to the user
-
 FROM ubuntu:18.04
 RUN apt-get update
 RUN apt-get upgrade -y python3
@@ -70,7 +39,7 @@ COPY imagemorpher ./imagemorpher
 COPY requirements.txt .
 
 RUN mkdir imagemorpher/morph/content/temp_morphed_images
-
 RUN pip install -r requirements.txt
+RUN pip install 'dramatiq[redis, watch]' django_dramatiq
 
 ENV PORT_NUM=8088
