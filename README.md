@@ -8,6 +8,11 @@
 * Shell into Image morpher docker container
 * `python manage.py runserver 0:8000`
 
+### Run a command in the dev ImageMorpher docker container linked to Redis
+docker build -t dev-face-morpher-api -f Dockerfile .
+docker container run -it -v /home/sammy/ImageMorpher:/app dev-face-morpher-api bash
+
+
 ## Unit Test
 * Shell into Image morpher docker container
 * Run `./manage.py test`

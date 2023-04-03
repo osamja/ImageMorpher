@@ -22,6 +22,7 @@ django-cors-middleware==1.4.0
 django-filter==2.2.0
 djangorestframework==3.10.3
 dlib==19.19
+dramatiq[redis, watch]
 ## fail2ban==0.10.2
 gunicorn==20.0.4
 httplib2==0.9.2
