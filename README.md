@@ -1,3 +1,12 @@
+# Replacing DLIB
+I may have found a workaround for dlib by using the expo face detector which uses Googles on device ML kit.
+Some takeaways from my spike are
+- The expo face detector does not seem as robust as dlib.  It fails where dlib succeeds
+- expo creates around 10-12 landmarks where as dlib generates 68. impact on quality with regards to the number of corresonding points is unknown
+- Since it runs on device, a morph sequence is not possible without sending the intermediate images back to the user for landmark detection
+- Because of the point above, it does not seem wise to move away from dlib.  
+- To workaround the memory constraints, I have increased the swap usage from 256MB to 8GB and given Docker permission to access this.
+
 # ImageMorpher
 * This application exposes a public API for morphing two faces together
 * Built on top of the Django web framework
