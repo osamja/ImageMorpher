@@ -21,6 +21,7 @@ import io
 import uuid
 import datetime
 from utils.date import getMorphDate
+import json
 
 from exceptions.CropException import CropException
 
@@ -142,3 +143,16 @@ def getCroppedImageFromPath(img_path):
     morphed_img_path = 'morph/content/temp_morphed_images/' + img_path    # location of saved image
     img = skio.imread(morphed_img_path)
     return img
+
+def getTempMorphedImageDirectory():
+    temp_morphed_img_dir = 'morph/content/temp_morphed_images/'
+    return temp_morphed_img_dir
+
+def getLandmarksFromPath(img_path):
+    # strip the file extension
+    landmarks_file_path = img_path.split('.')[0]
+    landmarks_file_path = getTempMorphedImageDirectory() + landmarks_file_path + '.json'
+    # read the json file
+    with open(landmarks_file_path) as f:
+        landmarks = json.load(f)
+    return landmarks

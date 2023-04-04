@@ -20,12 +20,14 @@ from PIL import Image
 import numpy as np
 import sys
 from skimage import img_as_ubyte
-from utils.graphics import getCroppedImagePath, getCroppedImageFromPath
+from utils.graphics import getCroppedImagePath, getCroppedImageFromPath, getTempMorphedImageDirectory, getLandmarksFromPath
 from utils.image_sources import saveImg, deleteImg
 from utils.date import getMorphDate
 from exceptions.CropException import CropException
+# Import json
+import json
 
-# import pdb
+import pdb
 
 # morph is essentially the src root directory in this file now
 #   aka import all files with morph/<file-path>
@@ -71,6 +73,9 @@ def index(request):
     # pdb.set_trace()
     img1 = getCroppedImageFromPath(img1_path)
     img2 = getCroppedImageFromPath(img2_path)
+    pdb.set_trace()
+    landmarks1 = getLandmarksFromPath(img1_path)
+    landmarks2 = getLandmarksFromPath(img2_path)
 
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
@@ -142,7 +147,15 @@ def uploadMorphImage(request):
     try:
         formData = request.FILES or request.POST
         img = formData.get('firstImageRef', False)
+        landmarks = formData.get('landmarks', False)
         cropped_img_path = getCroppedImagePath(img)
+        # Save the landmarks to a json file
+        # pdb.set_trace()
+        landmarks_file_path = cropped_img_path.split('.')[0]
+        landmarks_file_path = getTempMorphedImageDirectory() + landmarks_file_path + '.json'
+        with open(landmarks_file_path, 'w') as outfile:
+            json.dump(landmarks, outfile)
+
     except CropException as e:
         logging.error(e)
         errorMessage = str(e)

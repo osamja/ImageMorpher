@@ -212,6 +212,7 @@ def morph(img1, img2, t):
   """
   img1_corresponding_pts = getDetectedCorrespondingPoints(img1)
   img2_corresponding_pts = getDetectedCorrespondingPoints(img2)
+  pdb.set_trace()
 
   midPoints = crossDisolve(img1_corresponding_pts, img2_corresponding_pts, t, isImage=False)   # avg of the img point sets
   midpoint_tesselation = Delaunay(midPoints)
