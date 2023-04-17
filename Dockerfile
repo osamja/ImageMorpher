@@ -40,7 +40,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY . .
 
 # this command was primarily copied for cmake thats necessary for dlib
 RUN apt-get update && apt-get install -y \
