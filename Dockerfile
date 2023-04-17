@@ -40,8 +40,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 WORKDIR /app
 
-COPY . .
-
 # this command was primarily copied for cmake thats necessary for dlib
 RUN apt-get update && apt-get install -y \
     cmake \
@@ -54,6 +52,7 @@ RUN apt-get update && apt-get install -y \
     libavformat-dev \
     libboost-all-dev \
     libgtk2.0-dev \
+    libgl1-mesa-glx \
     libjpeg-dev \
     liblapack-dev \
     libswscale-dev \
@@ -65,8 +64,13 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# create imagemorpher directory in /app
+RUN mkdir imagemorpher
+COPY imagemorpher ./imagemorpher
+COPY requirements.txt .
+
+RUN mkdir imagemorpher/morph/content/temp_morphed_images
+
 RUN pip install -r requirements.txt
 
 ENV PORT_NUM=8088
-
-
