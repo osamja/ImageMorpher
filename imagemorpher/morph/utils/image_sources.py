@@ -14,18 +14,39 @@ import imageio
 
 from utils.date import getMorphDate
 
-def saveImg(morphedImg):
-  fileHash = uuid.uuid4()
-  morphDate = getMorphDate()
-  img_filename = morphDate + '-' + fileHash.hex + '.jpg'
-  morphed_img_path = 'morph/content/temp_morphed_images/' + img_filename    # location of saved image
-  imageio.imwrite(morphed_img_path, morphedImg)
-
-  return img_filename
+def saveImg(morphedImg, filepath):
+  if filepath:
+    imageio.imwrite(filepath, morphedImg)
+    return filepath
+  else:
+    fileHash = uuid.uuid4()
+    morphDate = getMorphDate()
+    img_filename = morphDate + '-' + fileHash.hex + '.jpg'
+    morphed_img_path = getMorphDirectory() + img_filename    # location of saved image
+    imageio.imwrite(morphed_img_path, morphedImg)
+    return img_filename
 
 def deleteImg(filename):
   img_path = 'morph/content/temp_morphed_images/' + filename
   os.remove(img_path)
+
+def getMorphDirectory():
+  return 'morph/content/temp_morphed_images/'
+
+def getMorphUri(host, isSequence):
+  fileHash = uuid.uuid4()
+  morphDate = getMorphDate()
+  filename = morphDate + '-' + fileHash.hex
+
+  if (isSequence):
+    filename = filename + '.gif'
+  else:
+    filename = filename + '.jpg'
+
+  morphed_file_path = getMorphDirectory() + filename
+  morphed_file_uri = 'https://' + host + '/facemorphs/' + filename
+
+  return morphed_file_uri, morphed_file_path
 
 def getImages():
   dir_path = os.path.dirname(os.path.realpath(__file__)) + '/images'

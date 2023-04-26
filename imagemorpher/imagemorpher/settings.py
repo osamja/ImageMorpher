@@ -139,6 +139,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 DATA_UPLOAD_MAX_MEMORY_SIZE=5242880
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880 # 5 MB
 
+# Deprecated, overrided by settings_dev and settings_prod
 DRAMATIQ_BROKER = {
     "BROKER": "dramatiq.brokers.redis.RedisBroker",
     "OPTIONS": {
