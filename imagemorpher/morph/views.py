@@ -13,6 +13,7 @@ from django.utils.html import escape
 
 # from django_dramatiq.middleware import DramatiqMiddleware
 from .utils.graphics import getCroppedImagePath
+from .utils.image_sources import getMorphUri
 
 from .tasks import processMorph
 
@@ -29,6 +30,14 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
         formData = request.FILES or request.POST
         isImg1 = formData['firstImageRef']
         isImg2 = formData['secondImageRef']
+        push_token = request.POST.get('expoPushToken')
+
+        if push_token and not push_token.startswith('ExponentPushToken'):
+            push_token = None
+            logging.info('push token is not valid')
+            print('push token is not valid')
+            return False
+
         if (isValidApiKey and isImg1 and isImg2):
             return True
         return False
@@ -40,13 +49,20 @@ def index(request):
     formData = request.FILES or request.POST
 
     if not isRequestValid(request):
-        logging.info('request is not valid')
-        return HttpResponse('Invalid Request', status=401)
+        morphResponse = {
+            'title': 'Invalid Request',
+            'body': 'Request is not valid',
+        }
+
+        return Response(morphResponse, status=status.HTTP_401_FORBIDDEN)
 
     img1_path = formData['firstImageRef']       # e.g. 2021-07-31-18-46-33-232174-b19ac14523fb4f5fb69dafa86ff97e6f.jpg
     img2_path = formData['secondImageRef']      #
 
     push_token = request.POST.get('expoPushToken')
+
+    is_async = request.POST.get('isAsync')
+    is_async = True if is_async == 'True' else False      # TODO: Use async by default (by June 2023)
     
     isMorphSequence = request.POST.get('isSequence')
     isMorphSequence = True if isMorphSequence == 'True' else False
@@ -54,20 +70,29 @@ def index(request):
     stepSize = request.POST.get('stepSize')
     stepSize = int(stepSize) if stepSize != None else 20
 
-    # duration for gif, the smaller the step size the smaller the duration that each frame in the 
-    # gif will be displayed
-    duration = 10 # temporary value which may be adjusted
+    # duration of each frame in gif in milliseconds
+    # if stepSize is small, there will be many frames, so the duration of each frame should be smaller
+    duration = request.POST.get('duration')
+    duration = int(duration) if duration != None else 250
 
     morphSequenceTime = request.POST.get('t')
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
     try:
-        if push_token == None:  # if no push token is provided, then process the morph synchronously
-            morph_uri = processMorph(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime)
+        forwarded_host = request.headers.get('X-Forwarded-Host')
+        morph_uri, morph_filepath = getMorphUri(forwarded_host, isMorphSequence)
+
+        if not is_async:
+            processMorph(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime, morph_uri, morph_filepath)
             return Response(morph_uri, status=status.HTTP_200_OK)
-        else:   # if a push token is provided, then process the morph asynchronously
-            processMorph.send(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime, push_token)
-        return Response({'Processing morph...'}, status=status.HTTP_200_OK)
+        else:
+            processMorph.send(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime, morph_uri, morph_filepath, push_token)
+            morphResponse = {
+                'title': 'Morphing',
+                'body': 'Your morph is being processed',
+                'morphUri': morph_uri,
+            }
+            return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
         logging.error('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

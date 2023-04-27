@@ -4,28 +4,6 @@
 * The ImageMorpher container is managed via docker-compose in the nginx proxy
 * Uses gunicorn as its WSGI
 
-<!-- # https://blog.realkinetic.com/building-minimal-docker-containers-for-python-applications-37d0272c52f3
-# Elegantly activating a virtualenv in a Dockerfile https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
-# Python 2.7 + dlib: https://hub.docker.com/r/cameronmaske/dlib/dockerfile
-# django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
-# gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/ -->
-
-## Redis
-- Start a Redis container by running the following command in a named SCREEN session:
-`docker run --name my-redis -it redis`
-
-# DEVELOPMENT:
-- Start or resume a screen session: `screen -S <session-name>` or `screen -r <session-name>`
-- Build docker image
-    - `docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f Dockerfile .`
-- Start dev server container linked to redis
-    - `docker container run --rm -it --link my-redis:redis -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api:dev bash`
-- Run django development server
-    - `python manage.py runserver 0:8088`
-- Run django dramatiq worker in a separate container but linked to redis
-    - `docker container run -it --link my-redis:redis -v /home/sammy/ImageMorpher:/app face-morpher-api:dev bash`
-    - `python manage.py rundramatiq`
-
 Server: [use SCREEN FIRST!]: docker build -t face-morpher-api -f Dockerfile .
 docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
 Local Mac: docker build -t face-morpher-api -f Dockerfile .
@@ -118,3 +96,8 @@ See `auto_delete.py`
 #   docker-compose down; docker-compose up
 #   Since the morph container references the volume, as long as the files are updated on the server; that will be served to the user
 
+<!-- # https://blog.realkinetic.com/building-minimal-docker-containers-for-python-applications-37d0272c52f3
+# Elegantly activating a virtualenv in a Dockerfile https://pythonspeed.com/articles/activate-virtualenv-dockerfile/
+# Python 2.7 + dlib: https://hub.docker.com/r/cameronmaske/dlib/dockerfile
+# django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
+# gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/ -->

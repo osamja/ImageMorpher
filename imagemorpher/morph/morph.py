@@ -206,7 +206,7 @@ def getMorphSequence(img1_name, img2_name, t_step=0.2):
     t += t_step
   return "Morph sequence is complete"
 
-def morph(img1, img2, t):
+def morph(img1, img2, t, filepath=None):
   """
   Create morph from img1 to img2 at time t
   """
@@ -231,7 +231,7 @@ def morph(img1, img2, t):
   ##
 
   morphed_im = crossDisolve(img1_warped, img2_warped, t)
-  morphed_img_filename = saveImg(morphed_im)
+  morphed_img_filename = saveImg(morphed_im, filepath)
   
   return morphed_img_filename, morphed_im
 
