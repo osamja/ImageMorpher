@@ -63,8 +63,6 @@ def processMorph(isMorphSequence, stepSize, duration, img1_path, img2_path, morp
         if (push_token):
             title = 'Morph Complete'
             body = 'Your morph is ready!'
-            processMorph.logger.info('Sending message')
-            processMorph.logger.info(push_token, title, body, morph_uri)
             send_message(push_token, title, body, morph_uri)
 
         return morph_uri

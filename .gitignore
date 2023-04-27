@@ -9,4 +9,5 @@ node_modules/
 imagemorpher/logs/
 imagemorpher/morph/content/
 .vscode/
+imagemorpher/db.sqlite3
 

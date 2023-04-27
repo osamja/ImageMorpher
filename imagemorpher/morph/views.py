@@ -31,7 +31,6 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
         isImg1 = formData['firstImageRef']
         isImg2 = formData['secondImageRef']
         push_token = request.POST.get('expoPushToken')
-        is_async = request.POST.get('isAsync')
 
         if push_token and not push_token.startswith('ExponentPushToken'):
             push_token = None
