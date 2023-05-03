@@ -33,11 +33,15 @@ def deleteImg(filename):
 def getMorphDirectory():
   return 'morph/content/temp_morphed_images/'
 
-def getMorphUri(host, isSequence):
-  fileHash = uuid.uuid4()
+def getMorphFilename(id):
+  """ Morph filename without extension """
+  fileHash = id
   morphDate = getMorphDate()
   filename = morphDate + '-' + fileHash.hex
 
+  return filename
+
+def getMorphUri(host, filename, isSequence):
   if (isSequence):
     filename = filename + '.gif'
   else:

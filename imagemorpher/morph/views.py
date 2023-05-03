@@ -1,7 +1,6 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import render
-from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -10,10 +9,13 @@ from django.core import serializers
 from django.core.exceptions import RequestDataTooBig
 from django.conf import settings
 from django.utils.html import escape
+import uuid
+
+from .models import Morph
 
 # from django_dramatiq.middleware import DramatiqMiddleware
 from .utils.graphics import getCroppedImagePath
-from .utils.image_sources import getMorphUri
+from .utils.image_sources import getMorphUri, getMorphFilename
 
 from .tasks import processMorph
 
@@ -79,14 +81,34 @@ def index(request):
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
     try:
+        morph_id = uuid.uuid4()
+        morph_filename = getMorphFilename(morph_id)
         forwarded_host = request.headers.get('X-Forwarded-Host')
-        morph_uri, morph_filepath = getMorphUri(forwarded_host, isMorphSequence)
+        morph_uri, morph_filepath = getMorphUri(forwarded_host, morph_filename, isMorphSequence)
+
+        # Create a new Morph instance
+        morph_instance = Morph(
+            id=morph_id,
+            status='pending',  # or any other initial status you'd like
+            first_image_ref=img1_path,
+            second_image_ref=img2_path,
+            morphed_image_ref=morph_uri,
+            morphed_image_filepath=morph_filepath,
+            is_morph_sequence=isMorphSequence,
+            step_size=stepSize,
+            duration=duration,
+            morph_sequence_time=morphSequenceTime,
+        )
+
+        morph_instance.save()
+
+        morph_id_str = str(morph_id)
 
         if not is_async:
-            processMorph(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime, morph_uri, morph_filepath)
+            processMorph(morph_id_str)
             return Response(morph_uri, status=status.HTTP_200_OK)
         else:
-            processMorph.send(isMorphSequence, stepSize, duration, img1_path, img2_path, morphSequenceTime, morph_uri, morph_filepath, push_token)
+            processMorph.send(morph_id_str, push_token)
             morphResponse = {
                 'title': 'Morphing',
                 'body': 'Your morph is being processed',
@@ -124,6 +146,18 @@ def uploadMorphImage(request):
         return Response(errorMessage, status=422)
 
     return Response(cropped_img_path)
+
+def morph_status(request, morph_uuid):
+    try:
+        morph = Morph.objects.get(pk=morph_uuid)
+    except Morph.DoesNotExist:
+        raise Http404("Morph not found")
+
+    status_data = {
+        'status': morph.status,
+    }
+
+    return JsonResponse(status_data)
 
 @api_view(["GET"])
 def getIndex(request):
