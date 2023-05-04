@@ -4,7 +4,10 @@
 * The ImageMorpher container is managed via docker-compose in the nginx proxy
 * Uses gunicorn as its WSGI
 
-Server: [use SCREEN FIRST!]: docker build -t face-morpher-api -f Dockerfile .
+Server: [use SCREEN FIRST!]: 
+docker build -t face-morpher-api -f Dockerfile .
+
+docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f dev.Dockerfile .
 docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
 Local Mac: docker build -t face-morpher-api -f Dockerfile .
 
@@ -63,7 +66,6 @@ Going to try to refactor this code, then maybe try to port it to the web
 
 # cron tab to automatically delete old files
 See `auto_delete.py`
-
 
 <!-- from dockerfile -->
 # https://blog.realkinetic.com/building-minimal-docker-containers-for-python-applications-37d0272c52f3

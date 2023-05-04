@@ -24,8 +24,10 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libjpeg-dev \
     liblapack-dev \
+    libpq-dev \
     libswscale-dev \
     pkg-config \
+    postgresql-client \
     python-dev \
     python-numpy \
     python-protobuf\
@@ -40,6 +42,6 @@ COPY requirements.txt .
 
 RUN mkdir imagemorpher/morph/content/temp_morphed_images
 RUN pip install -r requirements.txt
-RUN pip install 'dramatiq[redis, watch]' django_dramatiq
+RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary
 
 ENV PORT_NUM=8088
