@@ -27,6 +27,7 @@ class Morph(models.Model):
     morph_sequence_time = models.FloatField(default=0.5, validators=[MinValueValidator(0.01), MaxValueValidator(1)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    client_id = models.CharField(max_length=100, default='default')
 
     def __str__(self):
         return f"Morph {self.id}: {self.status}"
@@ -43,3 +44,4 @@ class Morph(models.Model):
         print(f"Morph Sequence Time: {self.morph_sequence_time}")
         print(f"Created At: {self.created_at}")
         print(f"Updated At: {self.updated_at}")
+        print(f"Client Id: {self.client_id}")

@@ -33,13 +33,13 @@ def processMorph(morph_id_str ,push_token=None):
     morph_instance.status = 'processing'
     morph_instance.save()
 
-    img1 = getCroppedImageFromPath(img1_path)
-    img2 = getCroppedImageFromPath(img2_path)
-
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
     # img2 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/george_small.jpg')
 
     try:
+        img1 = getCroppedImageFromPath(img1_path)
+        img2 = getCroppedImageFromPath(img2_path)
+
         if (isMorphSequence):
             morphed_img_uri_list = []
 

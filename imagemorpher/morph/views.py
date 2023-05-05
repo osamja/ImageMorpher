@@ -72,6 +72,9 @@ def index(request):
     stepSize = request.POST.get('stepSize')
     stepSize = int(stepSize) if stepSize != None else 20
 
+    clientId = request.POST.get('clientId')
+    clientId = clientId if clientId != None else 'default'
+
     # duration of each frame in gif in milliseconds
     # if stepSize is small, there will be many frames, so the duration of each frame should be smaller
     duration = request.POST.get('duration')
@@ -98,6 +101,7 @@ def index(request):
             step_size=stepSize,
             duration=duration,
             morph_sequence_time=morphSequenceTime,
+            client_id=clientId,
         )
 
         morph_instance.save()
@@ -116,6 +120,9 @@ def index(request):
             }
             return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
+        # mark morph as failed
+        morph_instance.status = 'failed'
+        morph_instance.save()
         logging.error('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
