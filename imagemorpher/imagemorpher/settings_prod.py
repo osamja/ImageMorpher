@@ -16,3 +16,18 @@ DRAMATIQ_BROKER = {
         "django_dramatiq.middleware.AdminMiddleware",
     ]
 }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('PROD_POSTGRES_DB'),
+        'USER': os.environ.get('PROD_POSTGRES_USER'),
+        'PASSWORD': os.environ.get('PROD_POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('PROD_POSTGRES_HOST'),
+        'PORT': os.environ.get('PROD_POSTGRES_PORT'),
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'options': '-c timezone=utc'
+        }
+    }
+}

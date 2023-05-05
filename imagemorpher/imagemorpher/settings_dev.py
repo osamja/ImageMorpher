@@ -30,8 +30,8 @@ DATABASES = {
         'HOST': os.environ.get('DEV_POSTGRES_HOST'),
         'PORT': os.environ.get('DEV_POSTGRES_PORT'),
         'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'options': '-c timezone=utc'
-        }
+        # 'OPTIONS': {
+        #     'options': '-c timezone=utc'
+        # }
     }
 }
