@@ -6,9 +6,10 @@
 
 Server: [use SCREEN FIRST!]: 
 docker build -t face-morpher-api -f Dockerfile .
-
-docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f dev.Dockerfile .
-docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
+- Development
+   `docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f dev.Dockerfile .`
+- Production
+   `docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:<RELEASE-VERSION> -f Dockerfile .`
 Local Mac: docker build -t face-morpher-api -f Dockerfile .
 
 # SHELL INTO CONTAINER:

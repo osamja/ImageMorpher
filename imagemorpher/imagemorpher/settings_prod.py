@@ -1,4 +1,8 @@
 from .settings import *
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Production Redis configuration for Dramatiq
 DRAMATIQ_BROKER = {
