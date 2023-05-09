@@ -4,7 +4,10 @@
 * The ImageMorpher container is managed via docker-compose in the nginx proxy
 * Uses gunicorn as its WSGI
 
-Server: [use SCREEN FIRST!]: 
+## Debug a container
+`docker-compose -f docker-compose.dev.yml run --rm dev-face-morpher-api /bin/bash`
+
+Server: [use SCREEN FIRST!]:
 docker build -t face-morpher-api -f Dockerfile .
 - Development
    `docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f dev.Dockerfile .`

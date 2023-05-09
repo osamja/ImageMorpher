@@ -49,6 +49,13 @@ INSTALLED_APPS = [
     'morph',
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'morph.apple_auth.AppleSignInAuthentication',
+    ),
+}
+
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', # cors
     'django.middleware.security.SecurityMiddleware',
