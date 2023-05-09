@@ -14,12 +14,10 @@ class Morph(models.Model):
         ('deleted', 'Deleted')
     )
 
-    # first_image = models.ImageField(upload_to='first_images/')
-    # second_image = models.ImageField(upload_to='second_images/')
-    # morphed_image = models.ImageField(upload_to='morphed_images/', null=True, blank=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     first_image_ref = models.CharField(max_length=100)
     second_image_ref = models.CharField(max_length=100)
     morphed_image_ref = models.CharField(max_length=100) # uri
@@ -37,7 +35,7 @@ class Morph(models.Model):
 
     # print the morph object
     def print(self):
-        print(f"Morph {self.id}: {self.status}")
+        print(f"Morph Status {self.id}: {self.status}")
         print(f"First Image: {self.first_image_ref}")
         print(f"Second Image: {self.second_image_ref}")
         print(f"Morphed Image: {self.morphed_image_ref}")
@@ -49,3 +47,21 @@ class Morph(models.Model):
         print(f"Updated At: {self.updated_at}")
         print(f"Client Id: {self.client_id}")
         print(f"User: {self.user}")
+
+class Upload(models.Model):
+    UPLOAD_STATUS_CHOICES = (
+        ('S', 'Success'),
+        ('F', 'Failure'),
+        ('P', 'Pending'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploads')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=1, choices=UPLOAD_STATUS_CHOICES)
+    error_message = models.TextField(blank=True, null=True)
+    file_type = models.CharField(max_length=50, blank=True, null=True)
+    file_size = models.IntegerField(blank=True, null=True)
+    morph = models.ForeignKey(Morph, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploads')
+    
+    def __str__(self):
+        return f'Upload {self.id}: {self.status} by {self.user.username} at {self.timestamp}'

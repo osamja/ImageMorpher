@@ -5,10 +5,14 @@
 * Uses gunicorn as its WSGI
 
 ## Debug a container
+Development
 `docker-compose -f docker-compose.dev.yml run --rm dev-face-morpher-api /bin/bash`
+Production
+`docker-compose -f docker-compose.yml run --rm face-morpher-api /bin/bash`
+`python manage.py runserver 0:8000`
 
 Server: [use SCREEN FIRST!]:
-docker build -t face-morpher-api -f Dockerfile .
+- `screen -S build-morpher`
 - Development
    `docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api:dev -f dev.Dockerfile .`
 - Production
@@ -25,7 +29,6 @@ Local Mac: docker build -t face-morpher-api -f Dockerfile .
 #       Control + a + d         # Run screen as background process
 #   docker-compose down; docker-compose up
 #   Since the morph container references the volume, as long as the files are updated on the server; that will be served to the user
-
 
 ### Run a command in the dev ImageMorpher docker container linked to Redis
 docker container run -it -v /home/sammy/ImageMorpher:/app dev-face-morpher-api bash
