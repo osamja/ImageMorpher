@@ -117,6 +117,7 @@ def index(request):
                 'title': 'Morphing',
                 'body': 'Your morph is being processed',
                 'morphUri': morph_uri,
+                'morphId': morph_id_str,
             }
             return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
@@ -162,6 +163,7 @@ def morph_status(request, morph_uuid):
 
     status_data = {
         'status': morph.status,
+        'morphUri': morph.morphed_image_ref,
     }
 
     return JsonResponse(status_data)
