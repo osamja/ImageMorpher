@@ -2,10 +2,13 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse, Http404
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework import status
-from django.core import serializers
+from rest_framework.permissions import IsAuthenticated, AllowAny
+# from django.core import serializers
+from django.contrib.auth.models import User
 from django.core.exceptions import RequestDataTooBig
 from django.conf import settings
 from django.utils.html import escape
@@ -24,11 +27,56 @@ from exceptions.CropException import CropException
 import logging
 logger = logging.getLogger(__name__)
 
-# logging.basicConfig(filename='morph/logs/morph-app.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
+from apple_auth import AppleSignInAuthentication
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+
+@api_view(['GET'])
+@authentication_classes([AppleSignInAuthentication])
+@permission_classes([IsAuthenticated])
+def user_data(request):
+    """
+    Function to provide User Data
+    """
+    if request.user.is_authenticated:
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+    else:
+        return Response({"detail": "Invalid or expired token"}, status=403)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def exchange_auth_code(request):
+    Apple_Sign_In_Auth = AppleSignInAuthentication()
+    authorization_code = request.data.get('authorizationCode')
+
+    if not authorization_code:
+        return Response({"detail": "Authorization code not provided"}, status=400)
+
+    try:
+        id_token = Apple_Sign_In_Auth.exchange_auth_code_for_token(authorization_code)
+    except Exception as e:
+        return Response({"detail": str(e)}, status=500)
+
+    return JsonResponse(id_token)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_morphs(request):
+    morphs = Morph.objects.filter(user=request.user)
+    morph_ids = [morph.id for morph in morphs]
+    response = {
+        'morph_ids': morph_ids
+    }
+
+    return JsonResponse(response)
 
 def isRequestValid(request, Authorization='ImageMorpherV1'):
     try:
-        isValidApiKey = request.headers['Authorization'] == Authorization
         formData = request.FILES or request.POST
         isImg1 = formData['firstImageRef']
         isImg2 = formData['secondImageRef']
@@ -40,13 +88,14 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
             print('push token is not valid')
             return False
 
-        if (isValidApiKey and isImg1 and isImg2):
+        if (isImg1 and isImg2):
             return True
         return False
     except:
         return False
 
 @api_view(["POST"])
+# @permission_classes([IsAuthenticated])
 def index(request):
     formData = request.FILES or request.POST
 
@@ -93,6 +142,7 @@ def index(request):
         morph_instance = Morph(
             id=morph_id,
             status='pending',  # or any other initial status you'd like
+            user=request.user,
             first_image_ref=img1_path,
             second_image_ref=img2_path,
             morphed_image_ref=morph_uri,
@@ -129,12 +179,13 @@ def index(request):
 
 @api_view(["POST"])
 def logClientSideMorphError(request):
-    # @TODO: Improve logging here
-    logMessage = 'Client side error: ', str(request.body)
+    logMessage = request.body
+    print(logMessage)
     logging.info(str(logMessage))
-    return Response('front end error')
+    return Response(status=status.HTTP_200_OK)
 
 @api_view(["POST"])
+# @permission_classes([IsAuthenticated])
 def uploadMorphImage(request):
     try:
         formData = request.FILES or request.POST

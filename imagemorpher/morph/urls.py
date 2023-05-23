@@ -8,4 +8,7 @@ urlpatterns = [
     path('morph/upload', views.uploadMorphImage),
     path('morph/status/<uuid:morph_uuid>/', views.morph_status, name='morph_status'),
     path('morph/log', views.logClientSideMorphError),
+    path('morph/exchange_auth_code', views.exchange_auth_code),
+    path('morph/user_data', views.user_data),
+    path('morph/mymorphs', views.get_user_morphs),
 ]
