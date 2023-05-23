@@ -98,7 +98,7 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
 # @permission_classes([IsAuthenticated])
 def index(request):
     formData = request.FILES or request.POST
-
+    print('morph request received')
     if not isRequestValid(request):
         morphResponse = {
             'title': 'Invalid Request',
@@ -132,6 +132,12 @@ def index(request):
     morphSequenceTime = request.POST.get('t')
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
+    morph_instance = None
+
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    
     try:
         morph_id = uuid.uuid4()
         morph_filename = getMorphFilename(morph_id)
@@ -142,7 +148,7 @@ def index(request):
         morph_instance = Morph(
             id=morph_id,
             status='pending',  # or any other initial status you'd like
-            user=request.user,
+            user=user,
             first_image_ref=img1_path,
             second_image_ref=img2_path,
             morphed_image_ref=morph_uri,
@@ -172,8 +178,9 @@ def index(request):
             return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
         # mark morph as failed
-        morph_instance.status = 'failed'
-        morph_instance.save()
+        if morph_instance:
+            morph_instance.status = 'failed'
+            morph_instance.save()
         logging.error('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
