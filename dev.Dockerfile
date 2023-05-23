@@ -42,6 +42,12 @@ COPY requirements.txt .
 
 RUN mkdir imagemorpher/morph/content/temp_morphed_images
 RUN pip install -r requirements.txt
-RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary
+
+# This is where we add the fix for the algorithm issue, this is needed
+# before we pip install pyjwt[crypto]
+RUN pip uninstall -y pyOpenSSL
+RUN pip install pyOpenSSL
+
+RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
 
 ENV PORT_NUM=8088

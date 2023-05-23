@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import User
 import uuid
 
 class Morph(models.Model):
@@ -17,6 +18,7 @@ class Morph(models.Model):
     # morphed_image = models.ImageField(upload_to='morphed_images/', null=True, blank=True)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     first_image_ref = models.CharField(max_length=100)
     second_image_ref = models.CharField(max_length=100)
     morphed_image_ref = models.CharField(max_length=100) # uri
@@ -33,7 +35,7 @@ class Morph(models.Model):
         return f"Morph {self.id}: {self.status}"
 
     # print the morph object
-    def printMorph(self):
+    def print(self):
         print(f"Morph {self.id}: {self.status}")
         print(f"First Image: {self.first_image_ref}")
         print(f"Second Image: {self.second_image_ref}")
@@ -45,3 +47,4 @@ class Morph(models.Model):
         print(f"Created At: {self.created_at}")
         print(f"Updated At: {self.updated_at}")
         print(f"Client Id: {self.client_id}")
+        print(f"User: {self.user}")
