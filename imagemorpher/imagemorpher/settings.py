@@ -146,7 +146,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024  
 
 # Maximum size (in bytes) for in-memory upload file. 20 MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 
 # Deprecated, overrided by settings_dev and settings_prod
 DRAMATIQ_BROKER = {
