@@ -21,8 +21,11 @@ import io
 import uuid
 import datetime
 from utils.date import getMorphDate
+import dlib
+import numpy as np
 
 from exceptions.CropException import CropException
+from exceptions.FaceDetectException import FaceDetectException
 
 import logging
 logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
@@ -50,6 +53,27 @@ def plotDelauneyTesselation(tri, points):
     plt.triplot(points[:,0], points[:,1], tri.simplices)
     plt.plot(points[:,0], points[:,1], 'o')
     plt.show()
+
+# This function is similar to the one in morph.py
+#  except it returns whether the face was detected or not
+def isDetectedCorrespondingPoints(img):
+  detector = dlib.get_frontal_face_detector()
+  predictor = dlib.shape_predictor('morph/utils/shape_predictor_68_face_landmarks.dat')
+
+  try:
+    face = detector(img, 1)[0]      # get first face
+  except Exception as e:
+    # ideally here, we return this in the HTTP Response
+    logging.error("Could not find corresponding points..")
+    raise FaceDetectException("Could not find corresponding points..")
+  face_detection_object = predictor(img, face)
+  face_points = face_detection_object.parts()
+  landmarks = np.array([[p.x, p.y] for p in face_points])
+
+  if (len(landmarks) == 0):
+    raise FaceDetectException("Could not find corresponding points..")
+  
+  return True
 
 def isImageTypeSupported(img_path):
     if (isBase64Image(img_path)):
@@ -133,6 +157,14 @@ def getCroppedImagePath(img):
     # For debugging purposes only, compare uncropped vs cropped image for color inspection
     # imageio.imwrite('img1.jpg', img1)
     # imageio.imwrite('img1_cropped.jpg', img1_cropped_cv)
+
+    # Run the cropped face through the face detector to make sure it's a face
+    # If it's not a face, raise an exception
+    print('Checking if face is detected..')
+    is_face_detected = isDetectedCorrespondingPoints(img_cropped_cv)
+
+    if (not is_face_detected):
+        raise FaceDetectException('Could not find corresponding points..')
 
     imageio.imwrite(morphed_img_path, img_cropped_cv)
 

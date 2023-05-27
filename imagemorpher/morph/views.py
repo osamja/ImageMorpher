@@ -1,6 +1,9 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse, Http404
+from django.http import HttpResponse, JsonResponse, Http404, HttpResponseRedirect
 from django.shortcuts import render
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
@@ -14,7 +17,7 @@ from django.conf import settings
 from django.utils.html import escape
 import uuid
 
-from .models import Morph
+from .models import Morph, Upload
 
 # from django_dramatiq.middleware import DramatiqMiddleware
 from .utils.graphics import getCroppedImagePath
@@ -23,6 +26,7 @@ from .utils.image_sources import getMorphUri, getMorphFilename
 from .tasks import processMorph
 
 from exceptions.CropException import CropException
+from exceptions.FaceDetectException import FaceDetectException
 
 import logging
 logger = logging.getLogger(__name__)
@@ -47,6 +51,14 @@ def user_data(request):
         return Response(serializer.data)
     else:
         return Response({"detail": "Invalid or expired token"}, status=403)
+    
+# Change to a DELETE request
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    print("delete account")
+    request.user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -98,7 +110,7 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
 # @permission_classes([IsAuthenticated])
 def index(request):
     formData = request.FILES or request.POST
-
+    print('morph request received')
     if not isRequestValid(request):
         morphResponse = {
             'title': 'Invalid Request',
@@ -132,6 +144,12 @@ def index(request):
     morphSequenceTime = request.POST.get('t')
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
+    morph_instance = None
+
+    user = None
+    if request.user.is_authenticated:
+        user = request.user
+    
     try:
         morph_id = uuid.uuid4()
         morph_filename = getMorphFilename(morph_id)
@@ -142,7 +160,7 @@ def index(request):
         morph_instance = Morph(
             id=morph_id,
             status='pending',  # or any other initial status you'd like
-            user=request.user,
+            user=user,
             first_image_ref=img1_path,
             second_image_ref=img2_path,
             morphed_image_ref=morph_uri,
@@ -172,8 +190,9 @@ def index(request):
             return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
         # mark morph as failed
-        morph_instance.status = 'failed'
-        morph_instance.save()
+        if morph_instance:
+            morph_instance.status = 'failed'
+            morph_instance.save()
         logging.error('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -187,22 +206,68 @@ def logClientSideMorphError(request):
 @api_view(["POST"])
 # @permission_classes([IsAuthenticated])
 def uploadMorphImage(request):
+
+    # user = request.user if request.user.is_authenticated else None
+
+    # Create an Upload instance at the start of the request
+    # upload = Upload.objects.create(user=user, status='P')
+
+    # upload = Upload(user=user, status='P')
+
     try:
         formData = request.FILES or request.POST
         img = formData.get('firstImageRef', False)
+
+        # Save file_type and file_size to Upload instance
+        # upload.file_type = img.content_type
+        # upload.file_size = img.size
+        # upload.save()
+
         cropped_img_path = getCroppedImagePath(img)
     except CropException as e:
         logging.error(e)
         errorMessage = str(e)
+
+        # Update Upload instance with error message
+        # upload.error_message = errorMessage
+        # upload.status = 'F'
+        # upload.save()
+
+        return Response(errorMessage, status=422)
+    except FaceDetectException as e:
+        logging.error(e)
+        errorMessage = str(e)
+
+        # Update Upload instance with error message
+        # upload.error_message = errorMessage
+        # upload.status = 'F'
+        # upload.save()
+
         return Response(errorMessage, status=422)
     except RequestDataTooBig as e:
         logging.error(e)
         errorMessage = 'Image too large'
+
+        # Update Upload instance with error message
+        # upload.error_message = errorMessage
+        # upload.status = 'F'
+        # upload.save()
+
         return Response(errorMessage, status=422)
     except Exception as e:
         logging.error(e)
         errorMessage = 'Could not crop image'
+
+        # Update Upload instance with error message
+        # upload.error_message = errorMessage
+        # upload.status = 'F'
+        # upload.save()
+
         return Response(errorMessage, status=422)
+
+    # If the image cropping succeeds, update the status of the Upload instance to Success
+    # upload.status = 'S'
+    # upload.save()
 
     return Response(cropped_img_path)
 

@@ -11,4 +11,5 @@ urlpatterns = [
     path('morph/exchange_auth_code', views.exchange_auth_code),
     path('morph/user_data', views.user_data),
     path('morph/mymorphs', views.get_user_morphs),
+    path('morph/delete_account', views.delete_account, name='delete_account'),
 ]

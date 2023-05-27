@@ -39,6 +39,7 @@ RUN apt-get update && apt-get install -y \
 RUN mkdir imagemorpher
 COPY imagemorpher ./imagemorpher
 COPY requirements.txt .
+COPY .env .
 
 RUN mkdir imagemorpher/morph/content/temp_morphed_images
 RUN pip install -r requirements.txt
