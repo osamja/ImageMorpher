@@ -36,6 +36,23 @@ class AppleSignInAuthentication(BaseAuthentication):
         else:
             raise Exception("Failed to exchange auth code for token. HTTP Status: {}, Response: {}".format(response.status_code, response.text))
 
+    def exchange_refresh_token_for_id_token(self, refresh_token):
+        client_secret = os.environ.get('APPLE_CLIENT_SECRET')
+        client_id = os.environ.get('APPLE_CLIENT_ID')
+        url = 'https://appleid.apple.com/auth/token'
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        data = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'refresh_token': refresh_token,
+            'grant_type': 'refresh_token',
+        }
+        response = requests.post(url, headers=headers, data=data)
+        if response.status_code == 200:
+            return json.loads(response.text)
+        else:
+            raise Exception("Failed to exchange refresh token for ID token. HTTP Status: {}, Response: {}".format(response.status_code, response.text))
+
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION')
         if not auth_header or not auth_header.startswith('Bearer '):

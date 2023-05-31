@@ -19,6 +19,8 @@ import uuid
 
 from .models import Morph, Upload
 
+import requests
+
 # from django_dramatiq.middleware import DramatiqMiddleware
 from .utils.graphics import getCroppedImagePath
 from .utils.image_sources import getMorphUri, getMorphFilename
@@ -33,6 +35,12 @@ logger = logging.getLogger(__name__)
 
 from apple_auth import AppleSignInAuthentication
 
+import os
+from dotenv import load_dotenv
+
+# load root .env file
+load_dotenv(dotenv_path='../../.env')
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -45,6 +53,8 @@ def user_data(request):
     """
     Function to provide User Data
     """
+    # return 401 for testing that a refresh token is revoked
+    # return Response({"detail": "testing revoke of refresh token"}, status=401)
     if request.user.is_authenticated:
         user = request.user
         serializer = UserSerializer(user)
@@ -52,13 +62,44 @@ def user_data(request):
     else:
         return Response({"detail": "Invalid or expired token"}, status=403)
     
-# Change to a DELETE request
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_account(request):
     print("delete account")
-    request.user.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
+
+    CLIENT_ID = os.environ.get('APPLE_CLIENT_ID')
+    CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET')
+
+    # Extract refresh token from request header X_Refresh_Token
+    refresh_token = request.headers.get("X-REFRESH-TOKEN", None)
+
+    # If refresh token is not provided, return error response
+    if refresh_token is None:
+        return Response({"detail": "Refresh token not provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Prepare the headers and body for the revoke token request
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+
+    data = {
+        'token': refresh_token,
+        'token_type_hint': 'refresh_token',
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET,
+    }
+
+    # Send request to Apple's Revoke Token API
+    response = requests.post('https://appleid.apple.com/auth/revoke', headers=headers, data=data)
+
+    # Check response from Apple's API
+    if response.status_code == 200:
+        # If the revoke was successful, delete the user's account
+        request.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    else:
+        # If the revoke was not successful, return error response
+        return Response({"detail": "Failed to revoke token"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -70,11 +111,27 @@ def exchange_auth_code(request):
         return Response({"detail": "Authorization code not provided"}, status=400)
 
     try:
-        id_token = Apple_Sign_In_Auth.exchange_auth_code_for_token(authorization_code)
+        jwt_token = Apple_Sign_In_Auth.exchange_auth_code_for_token(authorization_code)
     except Exception as e:
         return Response({"detail": str(e)}, status=500)
 
-    return JsonResponse(id_token)
+    return JsonResponse(jwt_token)
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    Apple_Sign_In_Auth = AppleSignInAuthentication()
+    refresh_token = request.data.get('refresh_token')
+
+    if not refresh_token:
+        return Response({"detail": "Refresh token not provided"}, status=400)
+
+    try:
+        new_id_token = Apple_Sign_In_Auth.exchange_refresh_token_for_id_token(refresh_token)
+    except Exception as e:
+        return Response({"detail": str(e)}, status=500)
+
+    return JsonResponse(new_id_token)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
