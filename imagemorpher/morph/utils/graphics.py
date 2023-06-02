@@ -170,7 +170,11 @@ def getCroppedImagePath(img):
 
     return img_filename
 
-def getCroppedImageFromPath(img_path):
+def getCroppedImageFromPath(img_path, get_img_path=False):
     morphed_img_path = 'morph/content/temp_morphed_images/' + img_path    # location of saved image
     img = skio.imread(morphed_img_path)
+
+    if (get_img_path):
+        return morphed_img_path
+
     return img
