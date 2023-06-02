@@ -13,7 +13,18 @@ from .utils.date import getMorphDate
 from .utils.image_sources import saveImg, deleteImg
 from .utils.graphics import getCroppedImagePath, getCroppedImageFromPath
 
-from .models import Morph
+from .models import Morph, AnimeGan
+
+import torch
+import torchvision.transforms as transforms
+from torch.autograd import Variable
+import torchvision.utils as vutils
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+import matplotlib.pyplot as plt
+from torchvision.transforms.functional import to_pil_image
 
 @dramatiq.actor(max_retries=0)
 def processMorph(morph_id_str ,push_token=None):
@@ -97,6 +108,62 @@ def processMorph(morph_id_str ,push_token=None):
         morph_instance.status = 'failed'
         morph_instance.save()
         return None
+
+@dramatiq.actor(max_retries=0)
+def processAnimeGanMorph(animegan_id_str, push_token=None):
+    # Load the model
+    model = torch.hub.load("bryandlee/animegan2-pytorch", "generator").eval()
+
+    # Convert the AnimeGan ID from string to uuid and get the instance
+    animegan_id = uuid.UUID(animegan_id_str)
+    animegan_instance = AnimeGan.objects.get(id=animegan_id)
+
+    # Update the status of the instance to processing
+    animegan_instance.status = 'processing'
+    animegan_instance.save()
+
+    try:
+        img_path = animegan_instance.image_ref
+        animegan_image_filepath = animegan_instance.filepath
+        # Continue with your original image processing here
+        img_path = getCroppedImageFromPath(img_path, True)
+
+        image = Image.open(img_path)
+
+        transform = transforms.Compose([
+            transforms.PILToTensor()
+        ])
+
+        img_tensor = transform(image)
+        img_tensor = img_tensor.float()
+        img_tensor = img_tensor.unsqueeze(0)
+
+        out = model(img_tensor)
+        out = (out - out.min()) / (out.max() - out.min())
+        out_image = to_pil_image(out.squeeze(0))
+
+        animegan_img_filename = saveImg(out_image, animegan_image_filepath)
+
+        # Update AnimeGan instance status to complete
+        animegan_instance.status = 'completed'
+        animegan_instance.save()
+
+        # If there's a push token, send a message
+        if push_token:
+            title = 'AnimeGan Complete'
+            body = 'Your AI cartoon avatar is ready!'
+            send_message(push_token, title, body, animegan_instance.animegan_image_ref)
+
+        return animegan_img_filename
+
+    except Exception as e:
+        # Log the error and update AnimeGan instance status to failed
+        logger.error(e)
+        animegan_instance.status = 'failed'
+        animegan_instance.save()
+
+        return None
+
 
 def send_message(expo_token, title, body, url):
     message = {

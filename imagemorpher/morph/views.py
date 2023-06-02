@@ -17,7 +17,7 @@ from django.conf import settings
 from django.utils.html import escape
 import uuid
 
-from .models import Morph, Upload
+from .models import Morph, Upload, AnimeGan
 
 import requests
 
@@ -25,7 +25,7 @@ import requests
 from .utils.graphics import getCroppedImagePath
 from .utils.image_sources import getMorphUri, getMorphFilename
 
-from .tasks import processMorph
+from .tasks import processMorph, processAnimeGanMorph
 
 from exceptions.CropException import CropException
 from exceptions.FaceDetectException import FaceDetectException
@@ -61,7 +61,7 @@ def user_data(request):
         return Response(serializer.data)
     else:
         return Response({"detail": "Invalid or expired token"}, status=403)
-    
+
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_account(request):
@@ -144,11 +144,11 @@ def get_user_morphs(request):
 
     return JsonResponse(response)
 
-def isRequestValid(request, Authorization='ImageMorpherV1'):
+def isRequestValid(request, isAnimeGan, Authorization='ImageMorpherV1'):
     try:
         formData = request.FILES or request.POST
         isImg1 = formData['firstImageRef']
-        isImg2 = formData['secondImageRef']
+        isImg2 = not isAnimeGan and formData['secondImageRef']
         push_token = request.POST.get('expoPushToken')
 
         if push_token and not push_token.startswith('ExponentPushToken'):
@@ -159,6 +159,9 @@ def isRequestValid(request, Authorization='ImageMorpherV1'):
 
         if (isImg1 and isImg2):
             return True
+        elif isAnimeGan and isImg1:
+            return True
+
         return False
     except:
         return False
@@ -174,7 +177,7 @@ def index(request):
             'body': 'Request is not valid',
         }
 
-        return Response(morphResponse, status=status.HTTP_401_FORBIDDEN)
+        return Response(morphResponse, status=status.HTTP_401_UNAUTHORIZED)
 
     img1_path = formData['firstImageRef']       # e.g. 2021-07-31-18-46-33-232174-b19ac14523fb4f5fb69dafa86ff97e6f.jpg
     img2_path = formData['secondImageRef']      #
@@ -252,6 +255,66 @@ def index(request):
             morph_instance.save()
         logging.error('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["POST"])
+# @permission_classes([IsAuthenticated])
+def animegan(request):
+    formData = request.FILES or request.POST
+
+    if not isRequestValid(request, isAnimeGan=True):
+        morphResponse = {
+            'title': 'Invalid Request',
+            'body': 'Request is not valid',
+        }
+
+        return Response(morphResponse, status=status.HTTP_401_UNAUTHORIZED)
+
+    img_path = formData['firstImageRef']
+
+    is_async = request.POST.get('isAsync')
+    is_async = True if is_async == 'True' else False
+
+    clientId = request.POST.get('clientId')
+    clientId = clientId if clientId != None else 'default'
+    
+    try:
+        animegan_id = uuid.uuid4()
+        animegan_filename = getMorphFilename(animegan_id)
+        forwarded_host = request.headers.get('X-Forwarded-Host')
+        animegan_uri, animegan_filepath = getMorphUri(forwarded_host, animegan_filename, False)
+
+        # Create a new AnimeGan instance
+        animegan_instance = AnimeGan(
+            id=animegan_id,
+            status='pending',
+            user=request.user if request.user.is_authenticated else None,
+            image_ref=img_path,
+            uri=animegan_uri,
+            filepath=animegan_filepath,
+            client_id=clientId,
+        )
+
+        animegan_instance.save()
+
+        animegan_id_str = str(animegan_id)
+
+        if not is_async:
+            processAnimeGanMorph(animegan_id_str)
+            return Response(animegan_uri, status=status.HTTP_200_OK)
+        else:
+            processAnimeGanMorph.send(animegan_id_str)
+
+            morphResponse = {
+                'title': 'Morphing',
+                'body': 'Your AI cartoon avatar is being processed',
+                'morphUri': animegan_uri,
+                'morphId': animegan_id_str,
+            }
+            return Response(morphResponse, status=status.HTTP_200_OK)
+    except Exception as e:
+        logging.error('Error %s', exc_info=e)
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(["POST"])
 def logClientSideMorphError(request):

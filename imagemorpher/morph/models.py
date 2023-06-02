@@ -48,6 +48,30 @@ class Morph(models.Model):
         print(f"Client Id: {self.client_id}")
         print(f"User: {self.user}")
 
+class AnimeGan(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+        ('deleted', 'Deleted')
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    image_ref = models.CharField(max_length=100)
+    uri = models.CharField(max_length=100) # uri
+    filepath = models.CharField(max_length=100) # filepath
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    client_id = models.CharField(max_length=100, default='default')
+
+    def __str__(self):
+        return f"AnimeGan {self.id}: {self.status}"
+
+
 class Upload(models.Model):
     UPLOAD_STATUS_CHOICES = (
         ('S', 'Success'),
