@@ -62,17 +62,11 @@ Going to try to refactor this code, then maybe try to port it to the web
 * How does inverse warping work?
 
 # Privacy
-* To delete all images for a certain month we can use the following command.  Note: This deletes all filenames that begin with 2021-11, aka files that were created in november of 2021. 
-`cd /home/sammy/ImageMorpher/imagemorpher/morph/content/temp_morphed_images`
-
-# delete files for a given month
-`find . -type f -name "2021-11*" -delete`
-
-# count number of files
-`find . -type f -name "2022-03*" | wc -l`
-
-# cron tab to automatically delete old files
-See `auto_delete.py`
+* To delete user images, we can run auto_delete.py.  This will delete all images that are older than 30 days.
+`docker exec -it <container-id> bash`
+`cd imagemorpher/morph/utils/auto_delete.py`
+`python auto_delete.py` 
+* Now checking the morph/content folder should not show older images.
 
 <!-- from dockerfile -->
 # https://blog.realkinetic.com/building-minimal-docker-containers-for-python-applications-37d0272c52f3
