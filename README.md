@@ -28,7 +28,6 @@ Local Mac: docker build -t face-morpher-api -f Dockerfile .
 #       screen -r <session-id>  # attach to existing screen
 #       Control + a + d         # Run screen as background process
 #   docker-compose down; docker-compose up
-#   Since the morph container references the volume, as long as the files are updated on the server; that will be served to the user
 
 ### Run a command in the dev ImageMorpher docker container linked to Redis
 docker container run -it -v /home/sammy/ImageMorpher:/app dev-face-morpher-api bash
@@ -74,11 +73,6 @@ Going to try to refactor this code, then maybe try to port it to the web
 # Python 2.7 + dlib: https://hub.docker.com/r/cameronmaske/dlib/dockerfile
 # django and nginx for production https://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html
 # gunicorn https://testdriven.io/blog/dockerizing-django-with-postgres-gunicorn-and-nginx/
-
-# BUILD IMAGE: 
-#   Server: [use SCREEN FIRST!]: docker build -t face-morpher-api -f Dockerfile .
-#   docker build --memory=2g --memory-swap=4g --cpuset-cpus=1 -t face-morpher-api -f Dockerfile .
-#   Local Mac: docker build -t face-morpher-api -f Dockerfile .
 
 # SHELL INTO CONTAINER:
 #   Server: docker container run -it -p 8088:8088 -v /home/sammy/ImageMorpher:/app face-morpher-api bash

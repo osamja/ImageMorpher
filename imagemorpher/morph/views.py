@@ -144,7 +144,7 @@ def get_user_morphs(request):
 
     return JsonResponse(response)
 
-def isRequestValid(request, isAnimeGan, Authorization='ImageMorpherV1'):
+def isRequestValid(request, isAnimeGan=False, Authorization='ImageMorpherV1'):
     try:
         formData = request.FILES or request.POST
         isImg1 = formData['firstImageRef']
