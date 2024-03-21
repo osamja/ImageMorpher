@@ -61,7 +61,7 @@ Going to try to refactor this code, then maybe try to port it to the web
 * How does inverse warping work?
 
 # Privacy
-* To delete user images, we can run auto_delete.py.  This will delete all images that are older than 30 days.
+* To delete user images, we can run utils/auto_delete.py.  This will delete all images that are older than 30 days.
 `docker exec -it <container-id> bash`
 `cd imagemorpher/morph/utils/auto_delete.py`
 `python auto_delete.py` 

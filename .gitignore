@@ -5,6 +5,7 @@
 logs/
 imagemorpher/morph/images/
 imagemorpher/morph/temp_morphed_images/
+!imagemorpher/morph/temp_morphed_images/readme.md
 node_modules/
 imagemorpher/logs/
 imagemorpher/morph/content/
