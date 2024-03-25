@@ -19,6 +19,8 @@ import uuid
 
 from .models import Morph, Upload, AnimeGan
 
+import pdb
+
 import requests
 
 # from django_dramatiq.middleware import DramatiqMiddleware
@@ -27,13 +29,13 @@ from .utils.image_sources import getMorphUri, getMorphFilename
 
 from .tasks import processMorph, processAnimeGanMorph
 
-from exceptions.CropException import CropException
-from exceptions.FaceDetectException import FaceDetectException
+from morph.exceptions.CropException import CropException
+from morph.exceptions.FaceDetectException import FaceDetectException
 
 import logging
 logger = logging.getLogger(__name__)
 
-from apple_auth import AppleSignInAuthentication
+from .apple_auth import AppleSignInAuthentication
 
 import os
 from dotenv import load_dotenv

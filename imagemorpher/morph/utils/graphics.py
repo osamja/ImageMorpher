@@ -20,12 +20,12 @@ import re
 import io
 import uuid
 import datetime
-from utils.date import getMorphDate
+from morph.utils.date import getMorphDate
 import dlib
 import numpy as np
 
-from exceptions.CropException import CropException
-from exceptions.FaceDetectException import FaceDetectException
+from morph.exceptions.CropException import CropException
+from morph.exceptions.FaceDetectException import FaceDetectException
 
 import logging
 logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')

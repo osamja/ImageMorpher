@@ -11,7 +11,7 @@ Production
 `docker-compose -f docker-compose.yml run --rm face-morpher-api /bin/bash`
 `python manage.py runserver 0:8000`
 
-# Build and run the container
+# Build the container
 - For secrets management, go to the imagemorpher directory where settings.py is located.  Copy the .env.default file into a .env file
 
 Server: [use SCREEN FIRST!]:

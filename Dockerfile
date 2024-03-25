@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 RUN apt-get update
 RUN apt-get upgrade -y python3
 RUN apt-get install -y python3-pip python3-dev build-essential vim
@@ -6,6 +6,9 @@ RUN pip3 install --upgrade virtualenv
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# https://stackoverflow.com/questions/61388002/how-to-avoid-question-during-the-docker-build
+ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
@@ -35,20 +38,19 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# create imagemorpher directory in /app
-RUN mkdir imagemorpher
-COPY imagemorpher ./imagemorpher
+COPY imagemorpher /app
 COPY requirements.txt .
-COPY .env .
 
-RUN mkdir imagemorpher/morph/content/temp_morphed_images
+RUN mkdir -p /app/morph/content/temp_morphed_images
+RUN mkdir -p /app/morph/logs
+RUN touch /app/morph/logs/morph-app-perf.log
 RUN pip install -r requirements.txt
 
 # This is where we add the fix for the algorithm issue, this is needed
- # before we pip install pyjwt[crypto]
- RUN pip uninstall -y pyOpenSSL
- RUN pip install pyOpenSSL
+# before we pip install pyjwt[crypto]
+RUN pip uninstall -y pyOpenSSL
+RUN pip install pyOpenSSL
 
- RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
+RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
 
 ENV PORT_NUM=8088

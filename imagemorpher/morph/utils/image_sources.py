@@ -12,7 +12,7 @@ import uuid
 import datetime
 import imageio
 
-from utils.date import getMorphDate
+from morph.utils.date import getMorphDate
 
 def saveImg(morphedImg, filepath):
   if filepath:
@@ -48,7 +48,11 @@ def getMorphUri(host, filename, isSequence):
     filename = filename + '.jpg'
 
   morphed_file_path = getMorphDirectory() + filename
-  morphed_file_uri = 'https://' + host + '/facemorphs/' + filename
+
+  if (host == 'localhost'):
+    morphed_file_uri = 'http://' + host + ':8088/' + morphed_file_path
+  else:
+    morphed_file_uri = 'https://' + host + '/facemorphs/' + filename
 
   return morphed_file_uri, morphed_file_path
 
