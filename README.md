@@ -1,6 +1,9 @@
 # ImageMorpher
 * This application exposes a public API for morphing two faces together
 
+![Image Morpher](docs/yin-yang.png "Image Morpher")
+
+
 # Build the container
 - Create a .env file in the imagemorpher directory where settings.py is located.  Populate the secret key variable by running `python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'`
 
