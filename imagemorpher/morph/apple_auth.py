@@ -72,8 +72,7 @@ class AppleSignInAuthentication(BaseAuthentication):
 
     def verify_apple_id_token(self, id_token):
         # Your Apple Team ID and Apple Services ID (Client ID)
-        team_id = "WQ3X459985"
-        client_id = "com.sammyjaved.imagemorpher"
+        client_id = os.environ.get('APPLE_CLIENT_ID')
 
         try:
             # Fetch Apple's public keys
