@@ -3,6 +3,7 @@
 
 ![Image Morpher](docs/yin-yang.png "Image Morpher")
 
+* The iOS app built with React Native: https://github.com/osamja/imagemorpher-mobile
 
 # Build the container
 - Create a .env file in the imagemorpher directory where settings.py is located.  Populate the secret key variable by running `python manage.py shell -c 'from django.core.management import utils; print(utils.get_random_secret_key())'`
