@@ -79,7 +79,7 @@ class Upload(models.Model):
         ('P', 'Pending'),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploads')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploads', null=True, blank=True)  # Allow null values
     timestamp = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=1, choices=UPLOAD_STATUS_CHOICES)
     error_message = models.TextField(blank=True, null=True)
@@ -88,4 +88,4 @@ class Upload(models.Model):
     morph = models.ForeignKey(Morph, on_delete=models.SET_NULL, null=True, blank=True, related_name='uploads')
     
     def __str__(self):
-        return f'Upload {self.id}: {self.status} by {self.user.username} at {self.timestamp}'
+        return f'Upload {self.id}: {self.status} by {self.user.username if self.user else "Anonymous"} at {self.timestamp}'

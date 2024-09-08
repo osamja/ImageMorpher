@@ -5,6 +5,16 @@ import sys
 
 
 def main():
+    print("manage.py: Starting the server")
+    if os.environ.get('MORPH_DEBUG') == 'true':
+        debug_port = os.environ.get('DEBUG_PORT', 5680)
+        print(f"manage.py: Debugging enabled on port {debug_port}")
+        import debugpy
+        debugpy.listen(("0.0.0.0", int(debug_port)))
+        print(f"⏳ Waiting for debugger to attach on port {debug_port}...")
+    else:
+        print("manage.py: Debugging disabled")
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'imagemorpher.settings')
     try:
         from django.core.management import execute_from_command_line

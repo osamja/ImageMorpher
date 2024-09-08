@@ -181,6 +181,8 @@ def index(request):
 
         return Response(morphResponse, status=status.HTTP_401_UNAUTHORIZED)
 
+
+    print('morph request is valid')
     img1_path = formData['firstImageRef']       # e.g. 2021-07-31-18-46-33-232174-b19ac14523fb4f5fb69dafa86ff97e6f.jpg
     img2_path = formData['secondImageRef']      #
 
@@ -195,6 +197,8 @@ def index(request):
     stepSize = request.POST.get('stepSize')
     stepSize = int(stepSize) if stepSize != None else 20
 
+    assert stepSize >= 1 and stepSize <= 101, 'Step size must be between 1 and 101'
+
     clientId = request.POST.get('clientId')
     clientId = clientId if clientId != None else 'default'
 
@@ -207,6 +211,8 @@ def index(request):
     morphSequenceTime = float(morphSequenceTime) if morphSequenceTime != None else 0.5
 
     morph_instance = None
+
+    print('About to create morph instance')
 
     user = None
     if request.user.is_authenticated:
@@ -249,6 +255,7 @@ def index(request):
                 'morphUri': morph_uri,
                 'morphId': morph_id_str,
             }
+            print('morphResponse', morphResponse)
             return Response(morphResponse, status=status.HTTP_200_OK)
     except Exception as e:
         # mark morph as failed
@@ -256,6 +263,7 @@ def index(request):
             morph_instance.status = 'failed'
             morph_instance.save()
         logging.error('Error %s', exc_info=e)
+        print('Error %s', exc_info=e)
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
@@ -328,32 +336,31 @@ def logClientSideMorphError(request):
 @api_view(["POST"])
 # @permission_classes([IsAuthenticated])
 def uploadMorphImage(request):
+    print('uploadMorphImage request received')
 
-    # user = request.user if request.user.is_authenticated else None
+    user = request.user if request.user.is_authenticated else None
 
     # Create an Upload instance at the start of the request
-    # upload = Upload.objects.create(user=user, status='P')
-
-    # upload = Upload(user=user, status='P')
+    upload = Upload.objects.create(user=user, status='P')
 
     try:
         formData = request.FILES or request.POST
         img = formData.get('firstImageRef', False)
 
         # Save file_type and file_size to Upload instance
-        # upload.file_type = img.content_type
-        # upload.file_size = img.size
-        # upload.save()
-
+        upload.file_type = img.content_type
+        upload.file_size = img.size
+        upload.save()
+        print('upload saved')
         cropped_img_path = getCroppedImagePath(img)
     except CropException as e:
         logging.error(e)
         errorMessage = str(e)
 
         # Update Upload instance with error message
-        # upload.error_message = errorMessage
-        # upload.status = 'F'
-        # upload.save()
+        upload.error_message = errorMessage
+        upload.status = 'F'
+        upload.save()
 
         return Response(errorMessage, status=422)
     except FaceDetectException as e:
@@ -361,9 +368,9 @@ def uploadMorphImage(request):
         errorMessage = str(e)
 
         # Update Upload instance with error message
-        # upload.error_message = errorMessage
-        # upload.status = 'F'
-        # upload.save()
+        upload.error_message = errorMessage
+        upload.status = 'F'
+        upload.save()
 
         return Response(errorMessage, status=422)
     except RequestDataTooBig as e:
@@ -371,9 +378,9 @@ def uploadMorphImage(request):
         errorMessage = 'Image too large'
 
         # Update Upload instance with error message
-        # upload.error_message = errorMessage
-        # upload.status = 'F'
-        # upload.save()
+        upload.error_message = errorMessage
+        upload.status = 'F'
+        upload.save()
 
         return Response(errorMessage, status=422)
     except Exception as e:
@@ -381,15 +388,15 @@ def uploadMorphImage(request):
         errorMessage = 'Could not crop image'
 
         # Update Upload instance with error message
-        # upload.error_message = errorMessage
-        # upload.status = 'F'
-        # upload.save()
+        upload.error_message = errorMessage
+        upload.status = 'F'
+        upload.save()
 
         return Response(errorMessage, status=422)
 
     # If the image cropping succeeds, update the status of the Upload instance to Success
-    # upload.status = 'S'
-    # upload.save()
+    upload.status = 'S'
+    upload.save()
 
     return Response(cropped_img_path)
 

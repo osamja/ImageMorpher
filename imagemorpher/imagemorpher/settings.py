@@ -59,7 +59,7 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'morph.apple_auth.AppleSignInAuthentication',
+        # 'morph.apple_auth.AppleSignInAuthentication',
     ),
 }
 
