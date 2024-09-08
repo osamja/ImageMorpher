@@ -348,8 +348,10 @@ def uploadMorphImage(request):
         img = formData.get('firstImageRef', False)
 
         # Save file_type and file_size to Upload instance
-        upload.file_type = img.content_type
-        upload.file_size = img.size
+        if (img and hasattr(img, 'content_type')):
+            upload.file_type = img.content_type
+        if (img and hasattr(img,'k')):
+            upload.file_size = img.size
         upload.save()
         print('upload saved')
         cropped_img_path = getCroppedImagePath(img)
