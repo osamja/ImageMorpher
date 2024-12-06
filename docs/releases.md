@@ -16,7 +16,7 @@ Update version information: Update any version information in your application, 
 git add .
 git commit -m "Update version to v1.0.0"
 ```
-   
+
 Push the release branch: Push the release branch to the remote repository.
 
 ```

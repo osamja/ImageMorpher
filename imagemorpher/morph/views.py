@@ -347,7 +347,8 @@ def uploadMorphImage(request):
         formData = request.FILES or request.POST
         img = formData.get('firstImageRef', False)
 
-        # Save file_type and file_size to Upload instance
+        # Note: on iOS, img is base64 encoded so it does not have content_type or size
+        # @TODO: Send this information from the client and unconditionaly save/require this info
         if (img and hasattr(img, 'content_type')):
             upload.file_type = img.content_type
         if (img and hasattr(img,'k')):
