@@ -18,6 +18,6 @@
 # Then use Postman collection to call endpoints
 
 ## Debug a container
-
+- Since our ImageMorpher directory is mounted to the container, we can make changes to the code and see the changes reflected in the container
 - Bash into the container: `docker-compose -f docker-compose.yml run --rm face-morpher-api /bin/bash`
 - Start the development server: `python manage.py runserver 0:8000`

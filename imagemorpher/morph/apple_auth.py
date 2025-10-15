@@ -20,7 +20,6 @@ class AppleSignInAuthentication(BaseAuthentication):
     def exchange_auth_code_for_token(self, auth_code):
         client_secret = os.environ.get('APPLE_CLIENT_SECRET')
         client_id = os.environ.get('APPLE_CLIENT_ID')
-        redirect_uri = os.environ.get('APPLE_REDIRECT_URI')
         url = 'https://appleid.apple.com/auth/token'
         headers = {'content-type': 'application/x-www-form-urlencoded'}
         data = {
@@ -28,7 +27,6 @@ class AppleSignInAuthentication(BaseAuthentication):
             'client_secret': client_secret,
             'code': auth_code,
             'grant_type': 'authorization_code',
-            'redirect_uri': redirect_uri
         }
         response = requests.post(url, headers=headers, data=data)
         if response.status_code == 200:
