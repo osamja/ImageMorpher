@@ -49,8 +49,8 @@ def getMorphUri(host, filename, isSequence):
 
   morphed_file_path = getMorphDirectory() + filename
 
-  if (host == 'localhost'):
-    morphed_file_uri = 'http://' + host + ':8088/' + morphed_file_path
+  if (host == 'localhost' or host is None):
+    morphed_file_uri = 'http://localhost:8088/' + morphed_file_path
   else:
     morphed_file_uri = 'https://' + host + '/facemorphs/' + filename
 

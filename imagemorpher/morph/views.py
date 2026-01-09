@@ -262,8 +262,8 @@ def index(request):
         if morph_instance:
             morph_instance.status = 'failed'
             morph_instance.save()
-        logging.error('Error %s', exc_info=e)
-        print('Error %s', exc_info=e)
+        logging.error('Error', exc_info=e)
+        print('Error:', str(e))
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
@@ -387,8 +387,11 @@ def uploadMorphImage(request):
 
         return Response(errorMessage, status=422)
     except Exception as e:
-        logging.error(e)
-        errorMessage = 'Could not crop image'
+        logging.error(f'Upload failed with exception: {type(e).__name__}: {str(e)}', exc_info=True)
+        print(f'Upload failed with exception: {type(e).__name__}: {str(e)}')
+        print(f'Image data type: {type(img)}')
+        print(f'Image data (first 100 chars): {str(img)[:100]}')
+        errorMessage = f'Could not crop image: {type(e).__name__}: {str(e)}'
 
         # Update Upload instance with error message
         upload.error_message = errorMessage
@@ -419,3 +422,26 @@ def morph_status(request, morph_uuid):
 @api_view(["GET"])
 def getIndex(request):
     return Response('GET /morph')
+
+@api_view(["GET"])
+def serve_morph_image(request, filename):
+    """
+    Serve morphed images from the temp_morphed_images directory
+    """
+    import mimetypes
+    from django.http import FileResponse, Http404
+
+    # Construct the file path
+    file_path = os.path.join('morph', 'content', 'temp_morphed_images', filename)
+
+    # Check if file exists
+    if not os.path.exists(file_path):
+        raise Http404("Image not found")
+
+    # Determine the content type
+    content_type, _ = mimetypes.guess_type(file_path)
+    if content_type is None:
+        content_type = 'application/octet-stream'
+
+    # Return the file
+    return FileResponse(open(file_path, 'rb'), content_type=content_type)

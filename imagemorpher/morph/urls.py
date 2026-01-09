@@ -14,4 +14,5 @@ urlpatterns = [
     path('morph/mymorphs', views.get_user_morphs),
     path('morph/delete_account', views.delete_account, name='delete_account'),
     path('morph/refresh_token', views.refresh_token, name='refresh_token'),
+    path('facemorphs/<str:filename>', views.serve_morph_image, name='serve_morph_image'),
 ]
