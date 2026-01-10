@@ -18,10 +18,10 @@ class Morph(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    first_image_ref = models.CharField(max_length=100)
-    second_image_ref = models.CharField(max_length=100)
-    morphed_image_ref = models.CharField(max_length=100) # uri
-    morphed_image_filepath = models.CharField(max_length=100) # filepath
+    first_image_ref = models.CharField(max_length=255)
+    second_image_ref = models.CharField(max_length=255)
+    morphed_image_ref = models.CharField(max_length=255) # uri
+    morphed_image_filepath = models.CharField(max_length=255) # filepath
     is_morph_sequence = models.BooleanField(default=False)
     step_size = models.IntegerField(default=20, validators=[MinValueValidator(1), MaxValueValidator(101)])
     duration = models.IntegerField(default=250, validators=[MinValueValidator(1), MaxValueValidator(10000)])
@@ -61,9 +61,9 @@ class AnimeGan(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
-    image_ref = models.CharField(max_length=100)
-    uri = models.CharField(max_length=100) # uri
-    filepath = models.CharField(max_length=100) # filepath
+    image_ref = models.CharField(max_length=255)
+    uri = models.CharField(max_length=255) # uri
+    filepath = models.CharField(max_length=255) # filepath
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     client_id = models.CharField(max_length=100, default='default')

@@ -54,3 +54,10 @@ RUN pip install pyOpenSSL
 RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
 
 ENV PORT_NUM=8088
+
+# Copy entrypoint script and make it executable
+COPY imagemorpher/face-morpher-api-entrypoint.sh /app/face-morpher-api-entrypoint.sh
+RUN chmod +x /app/face-morpher-api-entrypoint.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/app/face-morpher-api-entrypoint.sh"]
