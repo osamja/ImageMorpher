@@ -27,7 +27,7 @@ import requests
 from .utils.graphics import getCroppedImagePath
 from .utils.image_sources import getMorphUri, getMorphFilename
 
-from .tasks import processMorph, processAnimeGanMorph
+from .tasks import processMorph
 
 from morph.exceptions.CropException import CropException
 from morph.exceptions.FaceDetectException import FaceDetectException
@@ -287,43 +287,7 @@ def animegan(request):
     clientId = request.POST.get('clientId')
     clientId = clientId if clientId != None else 'default'
     
-    try:
-        animegan_id = uuid.uuid4()
-        animegan_filename = getMorphFilename(animegan_id)
-        forwarded_host = request.headers.get('X-Forwarded-Host')
-        animegan_uri, animegan_filepath = getMorphUri(forwarded_host, animegan_filename, False)
-
-        # Create a new AnimeGan instance
-        animegan_instance = AnimeGan(
-            id=animegan_id,
-            status='pending',
-            user=request.user if request.user.is_authenticated else None,
-            image_ref=img_path,
-            uri=animegan_uri,
-            filepath=animegan_filepath,
-            client_id=clientId,
-        )
-
-        animegan_instance.save()
-
-        animegan_id_str = str(animegan_id)
-
-        if not is_async:
-            processAnimeGanMorph(animegan_id_str)
-            return Response(animegan_uri, status=status.HTTP_200_OK)
-        else:
-            processAnimeGanMorph.send(animegan_id_str)
-
-            morphResponse = {
-                'title': 'Morphing',
-                'body': 'Your AI cartoon avatar is being processed',
-                'morphUri': animegan_uri,
-                'morphId': animegan_id_str,
-            }
-            return Response(morphResponse, status=status.HTTP_200_OK)
-    except Exception as e:
-        logging.error('Error %s', exc_info=e)
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'error': 'AnimeGAN feature is currently disabled'}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @api_view(["POST"])
