@@ -152,6 +152,9 @@ def getCroppedImagePath(img):
 
     img_cropped = cropper.crop(img)
 
+    if img_cropped is None:
+        raise FaceDetectException('Could not find corresponding points..')
+
     img_cropped_cv = cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB)
 
     # For debugging purposes only, compare uncropped vs cropped image for color inspection
