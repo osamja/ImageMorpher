@@ -297,6 +297,11 @@ def logClientSideMorphError(request):
     logging.info(str(logMessage))
     return Response(status=status.HTTP_200_OK)
 
+def _mark_upload_failed(upload, message):
+    upload.error_message = message
+    upload.status = 'F'
+    upload.save()
+
 @api_view(["POST"])
 # @permission_classes([IsAuthenticated])
 def uploadMorphImage(request):
@@ -315,59 +320,26 @@ def uploadMorphImage(request):
         # @TODO: Send this information from the client and unconditionaly save/require this info
         if (img and hasattr(img, 'content_type')):
             upload.file_type = img.content_type
-        if (img and hasattr(img,'k')):
+        if (img and hasattr(img, 'k')):
             upload.file_size = img.size
         upload.save()
-        print('upload saved')
+
         cropped_img_path = getCroppedImagePath(img)
-    except CropException as e:
+    except (CropException, FaceDetectException) as e:
         logging.error(e)
-        errorMessage = str(e)
-
-        # Update Upload instance with error message
-        upload.error_message = errorMessage
-        upload.status = 'F'
-        upload.save()
-
-        return Response(errorMessage, status=422)
-    except FaceDetectException as e:
-        logging.error(e)
-        errorMessage = str(e)
-
-        # Update Upload instance with error message
-        upload.error_message = errorMessage
-        upload.status = 'F'
-        upload.save()
-
-        return Response(errorMessage, status=422)
+        _mark_upload_failed(upload, str(e))
+        return Response(str(e), status=422)
     except RequestDataTooBig as e:
         logging.error(e)
-        errorMessage = 'Image too large'
-
-        # Update Upload instance with error message
-        upload.error_message = errorMessage
-        upload.status = 'F'
-        upload.save()
-
-        return Response(errorMessage, status=422)
+        _mark_upload_failed(upload, 'Image too large')
+        return Response('Image too large', status=422)
     except Exception as e:
-        logging.error(f'Upload failed with exception: {type(e).__name__}: {str(e)}', exc_info=True)
-        print(f'Upload failed with exception: {type(e).__name__}: {str(e)}')
-        print(f'Image data type: {type(img)}')
-        print(f'Image data (first 100 chars): {str(img)[:100]}')
-        errorMessage = f'Could not crop image: {type(e).__name__}: {str(e)}'
+        logging.exception('Upload failed')
+        _mark_upload_failed(upload, f'{type(e).__name__}: {str(e)}')
+        return Response('Internal server error', status=500)
 
-        # Update Upload instance with error message
-        upload.error_message = errorMessage
-        upload.status = 'F'
-        upload.save()
-
-        return Response(errorMessage, status=422)
-
-    # If the image cropping succeeds, update the status of the Upload instance to Success
     upload.status = 'S'
     upload.save()
-
     return Response(cropped_img_path)
 
 def morph_status(request, morph_uuid):
