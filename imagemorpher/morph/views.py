@@ -380,6 +380,9 @@ def morph_status(request, morph_uuid):
         'status': morph.status,
         'morphUri': morph.morphed_image_ref,
         'progress': morph.progress,
+        'intermediateImages': [
+            f"https://pyaar.ai/facemorphs/{f}" for f in morph.intermediate_images
+        ],
     }
 
     return JsonResponse(status_data)

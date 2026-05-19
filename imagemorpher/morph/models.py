@@ -30,6 +30,7 @@ class Morph(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     client_id = models.CharField(max_length=100, default='default')
     progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+    intermediate_images = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return f"Morph {self.id}: {self.status}"

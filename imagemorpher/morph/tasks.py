@@ -53,6 +53,7 @@ def processMorph(morph_id_str ,push_token=None):
                 _img2 = np.copy(img2)
                 morphed_img_filename, morphed_im = morph(_img1, _img2, t)
                 morphed_img_uri_list.append((morphed_img_filename, morphed_im))
+                morph_instance.intermediate_images.append(morphed_img_filename)
                 morph_instance.progress = int((frame_index + 1) / total_frames * 100)
                 morph_instance.save()
                 frame_index += 1
