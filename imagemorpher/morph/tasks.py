@@ -77,7 +77,7 @@ def processMorph(morph_id_str ,push_token=None):
             # deleteImg(img2_path)
 
             morph_instance.progress = 100
-            morph_instance.status = 'complete'
+            morph_instance.status = 'completed'
             morph_instance.save()
 
             if (push_token):
@@ -92,7 +92,7 @@ def processMorph(morph_id_str ,push_token=None):
             # deleteImg(img2_path)
 
             morph_instance.progress = 100
-            morph_instance.status = 'complete'
+            morph_instance.status = 'completed'
             morph_instance.save()
 
             if (push_token):

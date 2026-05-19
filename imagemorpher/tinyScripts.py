@@ -9,7 +9,7 @@ def printNumCompletedAndFailed():
 	num_failed = 0
 
 	for morph in morphs:
-		if morph.status == 'complete':
+		if morph.status == 'completed':
 			num_completed += 1
 		elif morph.status == 'failed':
 			num_failed += 1

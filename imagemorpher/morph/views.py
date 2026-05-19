@@ -376,12 +376,15 @@ def morph_status(request, morph_uuid):
     except Morph.DoesNotExist:
         raise Http404("Morph not found")
 
+    forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST', request.get_host())
+    protocol = 'https' if request.is_secure() else 'http'
+
     status_data = {
         'status': morph.status,
         'morphUri': morph.morphed_image_ref,
         'progress': morph.progress,
         'intermediateImages': [
-            f"https://pyaar.ai/facemorphs/{f}" for f in morph.intermediate_images
+            f"{protocol}://{forwarded_host}/facemorphs/{f}" for f in morph.intermediate_images
         ],
     }
 
