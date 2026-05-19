@@ -32,6 +32,7 @@ def processMorph(morph_id_str ,push_token=None):
     duration = morph_instance.duration
 
     morph_instance.status = 'processing'
+    morph_instance.progress = 0
     morph_instance.save()
 
     # img1 = skio.imread('/home/sammy/development/ImageMorpher/imagemorpher/morph/images/obama_small.jpg')
@@ -44,12 +45,17 @@ def processMorph(morph_id_str ,push_token=None):
         if (isMorphSequence):
             morphed_img_uri_list = []
 
+            total_frames = len(range(0, 101, stepSize))
+            frame_index = 0
             for i in range(0, 101, stepSize):
                 t = float(i / 100) or 0
                 _img1 = np.copy(img1)
                 _img2 = np.copy(img2)
                 morphed_img_filename, morphed_im = morph(_img1, _img2, t)
                 morphed_img_uri_list.append((morphed_img_filename, morphed_im))
+                morph_instance.progress = int((frame_index + 1) / total_frames * 100)
+                morph_instance.save()
+                frame_index += 1
 
             morphed_im_list = []
             for i, im in enumerate(morphed_img_uri_list):
@@ -69,7 +75,7 @@ def processMorph(morph_id_str ,push_token=None):
             # deleteImg(img1_path)
             # deleteImg(img2_path)
 
-            # update morph status to complete
+            morph_instance.progress = 100
             morph_instance.status = 'complete'
             morph_instance.save()
 
@@ -84,14 +90,14 @@ def processMorph(morph_id_str ,push_token=None):
             # deleteImg(img1_path)
             # deleteImg(img2_path)
 
+            morph_instance.progress = 100
+            morph_instance.status = 'complete'
+            morph_instance.save()
+
             if (push_token):
                 title = 'Morph Complete'
                 body = 'Your morph is ready!'
                 send_message(push_token, title, body, morph_uri)
-
-            # update morph status to complete
-            morph_instance.status = 'complete'
-            morph_instance.save()
             return morph_uri
     except Exception as e:
         logger.error(e)

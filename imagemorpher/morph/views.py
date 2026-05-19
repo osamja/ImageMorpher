@@ -379,6 +379,7 @@ def morph_status(request, morph_uuid):
     status_data = {
         'status': morph.status,
         'morphUri': morph.morphed_image_ref,
+        'progress': morph.progress,
     }
 
     return JsonResponse(status_data)
