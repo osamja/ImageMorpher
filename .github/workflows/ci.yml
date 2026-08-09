@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: osamja/face-morpher-api
+  LINODE_HOST: 173.255.217.39
+  LINODE_PORT: 44444
+  LINODE_USER: sammy
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system deps for dlib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-all-dev libgtk2.0-dev
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install Python deps
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary 'pyjwt[crypto]'
+
+      - name: Run tests
+        env:
+          SECRET_KEY: ci-test-key
+        run: python manage.py test morph.tests
+        working-directory: imagemorpher
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install lint deps
+        run: pip install pylint isort
+
+      - name: Run isort check
+        run: isort --check-only --diff imagemorpher/morph/
+
+      - name: Run pylint
+        run: pylint imagemorpher/morph/ || true
+
+  build-push:
+    needs: [test, lint]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Linode
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ env.LINODE_HOST }}
+          port: ${{ env.LINODE_PORT }}
+          username: ${{ env.LINODE_USER }}
+          key: ${{ secrets.LINODE_SSH_KEY }}
+          script: |
+            set -e
+            echo "=== Pulling latest image ==="
+            docker pull ghcr.io/osamja/face-morpher-api:latest
+            docker tag ghcr.io/osamja/face-morpher-api:latest face-morpher-api:latest
+
+            echo "=== Redeploying face-morpher-api ==="
+            cd ~/workspace/nginx_sammyjaved_proxy
+            docker compose up -d face-morpher-api dramatiq_worker
+
+            echo "=== Running migrations ==="
+            docker exec nginx_sammyjaved_proxy-face-morpher-api-1 python manage.py migrate --noinput
+
+            echo "=== Cleaning up old images ==="
+            docker image prune -af
+
+  health-check:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify API health
+        run: |
+          sleep 3
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://pyaar.ai/morph)
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed: HTTP $STATUS"
+            exit 1
+          fi
+          echo "Health check passed: HTTP $STATUS"
