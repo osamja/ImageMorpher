@@ -39,7 +39,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary 'pyjwt[crypto]'
+          pip install 'dramatiq[redis, watch]==1.17.1' django_dramatiq psycopg2-binary 'pyjwt[crypto]'
 
       - name: Run tests
         env:
