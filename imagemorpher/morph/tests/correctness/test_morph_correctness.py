@@ -4,7 +4,6 @@ import numpy as np
 from django.test import TestCase
 import skimage.io as skio
 from morph.morph import morph
-from skimage.measure import compare_ssim as ssim
 import imagehash
 from PIL import Image
 from utils.graphics import getFormattedImages
