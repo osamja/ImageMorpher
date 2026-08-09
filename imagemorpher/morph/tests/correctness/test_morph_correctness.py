@@ -6,7 +6,7 @@ import skimage.io as skio
 from morph.morph import morph
 import imagehash
 from PIL import Image
-from utils.graphics import getFormattedImages
+from morph.utils.graphics import getFormattedImages
 
 """
 Test morph algorithm correctness
