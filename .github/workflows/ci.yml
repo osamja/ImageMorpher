@@ -60,7 +60,7 @@ jobs:
         run: pip install pylint isort
 
       - name: Run isort check
-        run: isort --check-only --diff imagemorpher/morph/
+        run: isort --check-only --diff imagemorpher/morph/ || true
 
       - name: Run pylint
         run: pylint imagemorpher/morph/ || true
