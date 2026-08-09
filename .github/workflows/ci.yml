@@ -44,7 +44,10 @@ jobs:
       - name: Run tests
         env:
           SECRET_KEY: ci-test-key
-        run: python manage.py test morph.tests
+        run: |
+          mkdir -p morph/logs morph/content/temp_morphed_images
+          touch morph/logs/morph-app-perf.log
+          python manage.py test morph.tests
         working-directory: imagemorpher
 
   lint:
