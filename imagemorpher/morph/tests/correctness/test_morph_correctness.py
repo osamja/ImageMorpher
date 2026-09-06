@@ -1,12 +1,12 @@
-import skimage as sk
-import pdb
-import numpy as np
 from django.test import TestCase
-import skimage.io as skio
-from morph.morph import morph
 import imagehash
 from PIL import Image
-from morph.utils.graphics import getFormattedImages
+import cv2
+from autocrop import Cropper
+
+from morph.morph import morph
+from morph.utils.graphics import getImageReadyForCrop, getCroppedImagePath
+from morph.exceptions.CropException import CropException
 
 """
 Test morph algorithm correctness
@@ -23,10 +23,32 @@ Create two additional morph test files for
     - multiple detected faces
     - no detected faces
     - face aspect ratios & angles
-    - 
 
 2. Test morph algorithm performance
 """
+
+
+def getFormattedImages(img1_path, img2_path):
+    """
+    Crop the two input images to their faces and return them as in-memory
+    numpy arrays, matching the original morph preprocessing step.
+    """
+    img1 = Image.open(img1_path)
+    img2 = Image.open(img2_path)
+
+    cropper = Cropper()
+
+    img1 = getImageReadyForCrop(img1)
+    img2 = getImageReadyForCrop(img2)
+
+    img1_cropped = cropper.crop(img1)
+    img2_cropped = cropper.crop(img2)
+
+    img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
+    img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
+
+    return img1_cropped_cv, img2_cropped_cv
+
 
 def getExceptionTestCases():
     test_cases = {
@@ -36,12 +58,13 @@ def getExceptionTestCases():
                 'morph/tests/content/input/zuby.jpg',
             ],
             "expected": [
-                ValueError('Image file type is not supported'),
+                'Image file type is not supported',
             ],
         },
     }
 
     return test_cases
+
 
 def getTestCases():
     test_cases = {
@@ -109,39 +132,39 @@ def getTestCases():
             ],
         },
     }
-    
+
     return test_cases
+
 
 # Test for the morph algorithm correctness by asserting the morphed image
 # resembles our expectations for the halfway image
 class MorphTestCorrectness(TestCase):
-    def test_get_morphed_img(self):
-        self.assertEqual(True, True)
-
     def testMorphCorrectness(self):
-      """
-      Test that the basic morph algorithm is working on two similarly sized images
-      """
-      test_cases = getTestCases()
+        """
+        Test that the basic morph algorithm is working on two similarly sized images
+        """
+        test_cases = getTestCases()
 
-      for test_case in test_cases:
-        current_test = test_cases[test_case]
-        img1_path = current_test['input'][0]
-        img2_path = current_test['input'][1]
-        output_path = current_test['expected'][0]
-        img1, img2 = getFormattedImages(img1_path, img2_path)
-        # img1, img2 = getSimilarSizedImages(img1, img2)
+        for test_case in test_cases:
+            current_test = test_cases[test_case]
+            img1_path = current_test['input'][0]
+            img2_path = current_test['input'][1]
+            output_path = current_test['expected'][0]
+            img1, img2 = getFormattedImages(img1_path, img2_path)
 
-        morphed_img_array = morph(img1, img2, 0.5)
-        morphed_image = Image.fromarray(morphed_img_array[1])
-        morphed_image = morphed_image.convert("RGB")
-        hash1 = imagehash.average_hash(morphed_image) 
-        hash0 = imagehash.average_hash(Image.open(output_path))
-        imageSimilarityTolerance = 5
-        print('Test: ', test_case)
-        imgDifference = abs(hash1 - hash0)
-        areImagesSimilar = imgDifference < imageSimilarityTolerance
-        self.assertEqual(areImagesSimilar, True)
+            _, morphed_img = morph(img1, img2, 0.5)
+            morphed_image = Image.fromarray(morphed_img)
+            morphed_image = morphed_image.convert("RGB")
+            hash1 = imagehash.average_hash(morphed_image)
+            hash0 = imagehash.average_hash(Image.open(output_path))
+            imageSimilarityTolerance = 5
+            print('Test: ', test_case)
+            imgDifference = abs(hash1 - hash0)
+            areImagesSimilar = imgDifference < imageSimilarityTolerance
+            self.assertTrue(
+                areImagesSimilar,
+                f'{test_case} hash difference {imgDifference} >= {imageSimilarityTolerance}'
+            )
 
     def testMorphExceptionHandling(self):
         """
@@ -152,15 +175,6 @@ class MorphTestCorrectness(TestCase):
         for test_case in test_cases:
             current_test = test_cases[test_case]
             img1_path = current_test['input'][0]
-            img2_path = current_test['input'][1]
 
-            # Option 1 for testing exceptions
-            try:
-                img1, img2 = getFormattedImages(img1_path, img2_path)
-                self.fail('Expected image file type exception to be thrown')
-            except ValueError:
-                pass
-
-            # Option 2 for testing exceptions
-            with self.assertRaises(ValueError):
-                img1, img2 = getFormattedImages(img1_path, img2_path)
+            with self.assertRaises(CropException):
+                getCroppedImagePath(img1_path)
