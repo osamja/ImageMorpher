@@ -136,7 +136,7 @@ jobs:
       - name: Verify API health
         run: |
           sleep 3
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://pyaar.ai/morph)
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://pyaar.ai/morph/)
           if [ "$STATUS" != "200" ]; then
             echo "Health check failed: HTTP $STATUS"
             exit 1
