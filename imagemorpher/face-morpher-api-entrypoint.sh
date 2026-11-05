@@ -11,8 +11,8 @@ if [ "$MORPH_DEBUG" = "true" ]; then
     # Start debugpy on the specified port (default to 5678 if not set)
     # install debug py
     pip install debugpy
-    python -m debugpy --listen 0.0.0.0:$DEBUG_PORT --wait-for-client manage.py runserver 0.0.0.0:8000
+    exec python -m debugpy --listen 0.0.0.0:$DEBUG_PORT --wait-for-client manage.py runserver 0.0.0.0:8000
 else
-    # Run the usual Django server without debugging
-    python manage.py runserver 0.0.0.0:8000
+    # Run whatever the container's CMD specifies (gunicorn for api, rundramatiq for worker)
+    exec "$@"
 fi

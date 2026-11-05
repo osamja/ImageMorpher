@@ -20,8 +20,8 @@ The iOS app (React Native): https://github.com/osamja/imagemorpher-mobile
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/morph` | Health check |
-| POST | `/morph/morph/upload` | Upload two face images for morphing |
-| GET | `/morph/morph/status/<uuid>/` | Poll morph job status |
+| POST | `/morph/upload` | Upload two face images for morphing |
+| GET | `/morph/status/<uuid>/` | Poll morph job status |
 | GET | `/facemorphs/<filename>` | Serve morphed image |
 
 ## Local Development
@@ -46,7 +46,7 @@ The iOS app (React Native): https://github.com/osamja/imagemorpher-mobile
 
 4. Test with curl:
    ```bash
-   curl -X POST http://localhost:8000/morph/morph/upload \
+   curl -X POST http://localhost:8000/morph/upload \
      -F "firstImageRef=@path/to/face1.jpg" \
      -F "secondImageRef=@path/to/face2.jpg"
    ```
@@ -57,18 +57,37 @@ The service runs as part of the `nginx_sammyjaved_proxy` docker-compose stack on
 
 Services: `face-morpher-api` (gunicorn), `dramatiq_worker`, `my-redis`, `prod-postgres`.
 
-To deploy a new version:
+`nginx_sammyjaved_proxy/docker-compose.yml` bind-mounts `imagemorpher/` and `morph/` from the host into both the API and worker containers, so most deploys don't need an image rebuild.
+
+### Fast path — code-only change (the usual case)
+
 ```bash
-# Build and transfer
+ssh -p 44444 sammy@173.255.217.39
+cd ~/workspace/ImageMorpher && git pull
+docker restart nginx_sammyjaved_proxy-face-morpher-api-1 \
+               nginx_sammyjaved_proxy-dramatiq_worker-1
+```
+
+Pull picks up the new source on the host; `docker restart` re-execs the containers against the bind-mounted code.
+
+### Full path — image change (new deps, Dockerfile edits)
+
+Use this when `requirements.txt`, the `Dockerfile`, or anything else baked into the image changes:
+
+```bash
+# Locally
 docker build -t face-morpher-api:<version> -f Dockerfile .
 docker save face-morpher-api:<version> | gzip > /tmp/face-morpher-api.tar.gz
 scp -P 44444 /tmp/face-morpher-api.tar.gz sammy@173.255.217.39:/tmp/
 
 # On Linode
 docker load < /tmp/face-morpher-api.tar.gz
-# Update image tag in ~/workspace/nginx_sammyjaved_proxy/docker-compose.yml
+# Bump `image: face-morpher-api:<version>` in
+# ~/workspace/nginx_sammyjaved_proxy/docker-compose.yml for both
+# `face-morpher-api` and `dramatiq_worker`, then:
 cd ~/workspace/nginx_sammyjaved_proxy && docker compose up -d
-docker exec <api-container> python manage.py migrate
+docker exec nginx_sammyjaved_proxy-face-morpher-api-1 \
+    python manage.py migrate
 ```
 
 ## Debug a Container
