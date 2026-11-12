@@ -146,6 +146,21 @@ def get_user_morphs(request):
 
     return JsonResponse(response)
 
+
+@api_view(["GET", "POST", "DELETE"])
+def authDisabled(request):
+    """Temporary kill switch for Apple Sign-In endpoints.
+
+    APPLE_CLIENT_ID and APPLE_CLIENT_SECRET are not configured on this
+    server, so the exchange/refresh calls fail. Anonymous morphing is
+    unaffected. Re-point the routes in morph/urls.py once credentials exist.
+    """
+    return Response(
+        {"detail": "Sign in with Apple is temporarily disabled."},
+        status=status.HTTP_501_NOT_IMPLEMENTED,
+    )
+
+
 def isRequestValid(request, isAnimeGan=False, Authorization='ImageMorpherV1'):
     try:
         formData = request.FILES or request.POST
