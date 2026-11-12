@@ -121,6 +121,36 @@ def isBase64Image(img_path):
 
     return False
 
+
+def getDlibFallbackCrop(img_bgr):
+    """Crop around the largest dlib face when autocrop fails.
+
+    autocrop relies on an OpenCV Haar cascade, which misses some valid faces
+    (profile/close-up/lighting). dlib's HOG detector is more forgiving. The
+    crop is padded and resized to match autocrop's 500x500 output.
+    """
+    detector = dlib.get_frontal_face_detector()
+    faces = detector(img_bgr, 1)
+    if len(faces) == 0:
+        return None
+
+    face = max(faces, key=lambda r: r.width() * r.height())
+    x, y, w, h = face.left(), face.top(), face.width(), face.height()
+
+    side = int(max(w, h) * 1.8)
+    cx, cy = x + w // 2, y + h // 2
+    x0 = max(0, cx - side // 2)
+    y0 = max(0, cy - side // 2)
+    x1 = min(img_bgr.shape[1], x0 + side)
+    y1 = min(img_bgr.shape[0], y0 + side)
+
+    crop = img_bgr[y0:y1, x0:x1]
+    if crop.size == 0:
+        return None
+
+    return cv2.resize(crop, (500, 500), interpolation=cv2.INTER_AREA)
+
+
 def getCroppedImagePath(img):
     """
     Given an image, returns img path where cropped file has been saved
@@ -149,8 +179,15 @@ def getCroppedImagePath(img):
     cropper = Cropper()
 
     img = getImageReadyForCrop(pil_img)
+    # autocrop/OpenCV expect BGR; PIL gives us RGB.
+    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    img_cropped = cropper.crop(img)
+    img_cropped = cropper.crop(img_bgr)
+
+    if img_cropped is None:
+        print('Autocrop failed; trying dlib fallback..')
+        logging.info('Autocrop failed; trying dlib fallback')
+        img_cropped = getDlibFallbackCrop(img_bgr)
 
     if img_cropped is None:
         raise FaceDetectException('Could not find corresponding points..')
@@ -164,7 +201,16 @@ def getCroppedImagePath(img):
     # Run the cropped face through the face detector to make sure it's a face
     # If it's not a face, raise an exception
     print('Checking if face is detected..')
-    is_face_detected = isDetectedCorrespondingPoints(img_cropped_cv)
+    try:
+        is_face_detected = isDetectedCorrespondingPoints(img_cropped_cv)
+    except FaceDetectException:
+        print('Autocrop result failed landmark check; trying dlib fallback..')
+        logging.info('Autocrop result failed landmark check; trying dlib fallback')
+        img_cropped = getDlibFallbackCrop(img_bgr)
+        if img_cropped is None:
+            raise
+        img_cropped_cv = cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB)
+        is_face_detected = isDetectedCorrespondingPoints(img_cropped_cv)
 
     if (not is_face_detected):
         raise FaceDetectException('Could not find corresponding points..')
