@@ -46,7 +46,7 @@ RUN pip install -r requirements.txt
 RUN pip uninstall -y pyOpenSSL
 RUN pip install pyOpenSSL
 
-RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
+RUN pip install 'dramatiq[redis, watch]==1.17.1' django_dramatiq psycopg2-binary pyjwt[crypto]
 
 # Application source is copied last.
 COPY imagemorpher /app
