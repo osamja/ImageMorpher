@@ -1,7 +1,7 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN apt-get update
 RUN apt-get upgrade -y python3
-RUN apt-get install -y python3-pip python3-dev build-essential vim
+RUN apt-get install -y python3-pip python3-dev python3-distutils python3-setuptools build-essential vim
 RUN pip3 install --upgrade virtualenv
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m virtualenv --python=/usr/bin/python3 $VIRTUAL_ENV
@@ -31,9 +31,6 @@ RUN apt-get update && apt-get install -y \
     libswscale-dev \
     pkg-config \
     postgresql-client \
-    python-dev \
-    python-numpy \
-    python-protobuf\
     software-properties-common \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
