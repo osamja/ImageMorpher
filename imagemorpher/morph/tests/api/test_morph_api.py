@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -99,12 +100,18 @@ class MorphAPIIntegrationTest(TestCase):
 
     def test_get_user_morphs_unauthenticated(self):
         """
-        Test that get_user_morphs endpoint requires authentication
+        Test that get_user_morphs endpoint requires authentication when
+        Apple Sign-In is enabled, and returns a 501 kill switch while it is
+        disabled (see settings.APPLE_SIGN_IN_ENABLED).
         """
         response = self.client.get('/morph/mymorphs')
 
-        # Should return 403 forbidden for unauthenticated requests
-        self.assertEqual(response.status_code, 403)
+        if settings.APPLE_SIGN_IN_ENABLED:
+            # Should return 403 forbidden for unauthenticated requests
+            self.assertEqual(response.status_code, 403)
+        else:
+            # Auth endpoints are stubbed out to a 501 kill switch
+            self.assertEqual(response.status_code, 501)
 
     def test_log_client_error_endpoint(self):
         """

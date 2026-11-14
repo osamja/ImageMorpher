@@ -57,6 +57,11 @@ INSTALLED_APPS = [
     'morph',
 ]
 
+# Apple Sign-In is temporarily disabled until APPLE_CLIENT_ID and
+# APPLE_CLIENT_SECRET are configured on the server. Set
+# APPLE_SIGN_IN_ENABLED=true to restore the auth endpoints.
+APPLE_SIGN_IN_ENABLED = os.environ.get('APPLE_SIGN_IN_ENABLED', 'false').lower() in ('true', '1', 'yes', 'on')
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'morph.apple_auth.AppleSignInAuthentication',
