@@ -1,7 +1,7 @@
 asn1crypto>=0.24.0
 astroid>=2.2.5
 attrs>=17.4.0
-autocrop>=1.0.2
+autocrop>=2.0.0
 Automat>=0.6.0
 autopep8>=1.4.4
 certifi>=2018.1.18

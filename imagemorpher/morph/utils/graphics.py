@@ -179,20 +179,22 @@ def getCroppedImagePath(img):
     cropper = Cropper()
 
     img = getImageReadyForCrop(pil_img)
-    # autocrop/OpenCV expect BGR; PIL gives us RGB.
+    # autocrop 2.x interprets numpy arrays as BGR; PIL gives us RGB.
     img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-    img_cropped = cropper.crop(img_bgr)
+    # autocrop 2.x returns a CropResult; .image is RGB (or None when no face
+    # is detected).
+    img_cropped_cv = cropper.crop(img_bgr).image
 
-    if img_cropped is None:
+    if img_cropped_cv is None:
         print('Autocrop failed; trying dlib fallback..')
         logging.info('Autocrop failed; trying dlib fallback')
-        img_cropped = getDlibFallbackCrop(img_bgr)
+        img_cropped_bgr = getDlibFallbackCrop(img_bgr)
+        if img_cropped_bgr is not None:
+            img_cropped_cv = cv2.cvtColor(img_cropped_bgr, cv2.COLOR_BGR2RGB)
 
-    if img_cropped is None:
+    if img_cropped_cv is None:
         raise FaceDetectException('Could not find corresponding points..')
-
-    img_cropped_cv = cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB)
 
     # For debugging purposes only, compare uncropped vs cropped image for color inspection
     # imageio.imwrite('img1.jpg', img1)
@@ -206,10 +208,10 @@ def getCroppedImagePath(img):
     except FaceDetectException:
         print('Autocrop result failed landmark check; trying dlib fallback..')
         logging.info('Autocrop result failed landmark check; trying dlib fallback')
-        img_cropped = getDlibFallbackCrop(img_bgr)
-        if img_cropped is None:
+        img_cropped_bgr = getDlibFallbackCrop(img_bgr)
+        if img_cropped_bgr is None:
             raise
-        img_cropped_cv = cv2.cvtColor(img_cropped, cv2.COLOR_BGR2RGB)
+        img_cropped_cv = cv2.cvtColor(img_cropped_bgr, cv2.COLOR_BGR2RGB)
         is_face_detected = isDetectedCorrespondingPoints(img_cropped_cv)
 
     if (not is_face_detected):

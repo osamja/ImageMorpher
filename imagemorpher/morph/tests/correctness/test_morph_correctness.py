@@ -41,13 +41,17 @@ def getFormattedImages(img1_path, img2_path):
     img1 = getImageReadyForCrop(img1)
     img2 = getImageReadyForCrop(img2)
 
-    img1_cropped = cropper.crop(img1)
-    img2_cropped = cropper.crop(img2)
+    # autocrop 2.x interprets numpy arrays as BGR and returns RGB.
+    img1_bgr = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR)
+    img2_bgr = cv2.cvtColor(img2, cv2.COLOR_RGB2BGR)
 
-    img1_cropped_cv = cv2.cvtColor(img1_cropped, cv2.COLOR_BGR2RGB)
-    img2_cropped_cv = cv2.cvtColor(img2_cropped, cv2.COLOR_BGR2RGB)
+    img1_cropped = cropper.crop(img1_bgr).image
+    img2_cropped = cropper.crop(img2_bgr).image
 
-    return img1_cropped_cv, img2_cropped_cv
+    if img1_cropped is None or img2_cropped is None:
+        raise CropException('Could not detect a face in one of the test images')
+
+    return img1_cropped, img2_cropped
 
 
 def getExceptionTestCases():
