@@ -38,12 +38,10 @@ RUN apt-get update && apt-get install -y \
     zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY imagemorpher /app
+# Install dependencies FIRST so this expensive layer (dlib, scipy, etc.)
+# stays cached as long as requirements.txt doesn't change. Copying app code
+# after it means everyday code changes only rebuild the cheap COPY layer.
 COPY requirements.txt .
-
-RUN mkdir -p /app/morph/content/temp_morphed_images
-RUN mkdir -p /app/morph/logs
-RUN touch /app/morph/logs/morph-app-perf.log
 RUN pip install -r requirements.txt
 
 # This is where we add the fix for the algorithm issue, this is needed
@@ -52,6 +50,12 @@ RUN pip uninstall -y pyOpenSSL
 RUN pip install pyOpenSSL
 
 RUN pip install 'dramatiq[redis, watch]' django_dramatiq psycopg2-binary pyjwt[crypto]
+
+# Application source is copied last.
+COPY imagemorpher /app
+RUN mkdir -p /app/morph/content/temp_morphed_images
+RUN mkdir -p /app/morph/logs
+RUN touch /app/morph/logs/morph-app-perf.log
 
 ENV PORT_NUM=8088
 
