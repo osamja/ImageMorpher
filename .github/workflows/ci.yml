@@ -30,20 +30,30 @@ jobs:
 
       # dlib ships no wheels on PyPI, so `pip install dlib` compiles C++ from
       # source (~5 min on CI). Build the wheel once and cache it keyed only on
-      # dlib + Python + OS; on cache hits we install the wheel directly and
-      # skip the compile entirely, even when requirements.txt changes.
-      - name: Cache compiled dlib wheel
+      # dlib + Python + OS. We use explicit restore/save (instead of the
+      # combined cache action) so the wheel is persisted even when the job
+      # FAILS — otherwise a failing run never saves the cache and the next run
+      # recompiles dlib every time.
+      - name: Restore compiled dlib wheel
         id: dlib-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ~/dlib-wheel
           key: dlib-wheel-${{ runner.os }}-py3.10-19.24.6
 
       - name: Build dlib wheel
+        id: build-dlib
         if: steps.dlib-cache.outputs.cache-hit != 'true'
         run: |
           pip install --upgrade pip wheel
           pip wheel dlib==19.24.6 -w ~/dlib-wheel
+
+      - name: Save compiled dlib wheel
+        if: always() && steps.dlib-cache.outputs.cache-hit != 'true' && steps.build-dlib.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/dlib-wheel
+          key: dlib-wheel-${{ runner.os }}-py3.10-19.24.6
 
       - name: Cache pip
         uses: actions/cache@v4
