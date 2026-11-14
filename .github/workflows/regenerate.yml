@@ -1,0 +1,59 @@
+name: Regenerate expected images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install system deps for dlib
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libboost-all-dev libgtk2.0-dev
+
+      - name: Cache compiled dlib wheel
+        id: dlib-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/dlib-wheel
+          key: dlib-wheel-${{ runner.os }}-py3.10-19.24.6
+
+      - name: Build dlib wheel
+        if: steps.dlib-cache.outputs.cache-hit != 'true'
+        run: |
+          pip install --upgrade pip wheel
+          pip wheel dlib==19.24.6 -w ~/dlib-wheel
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-py3.10-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-py3.10-
+
+      - name: Install Python deps
+        run: |
+          pip install --upgrade pip
+          pip install ~/dlib-wheel/dlib-*.whl
+          pip install -r requirements.txt
+          pip install 'dramatiq[redis, watch]==1.17.1' django_dramatiq psycopg2-binary 'pyjwt[crypto]'
+
+      - name: Regenerate expected images
+        working-directory: imagemorpher
+        run: |
+          mkdir -p morph/logs morph/content/temp_morphed_images
+          touch morph/logs/morph-app-perf.log
+          python regenerate_expected_images.py
+
+      - name: Upload regenerated images
+        uses: actions/upload-artifact@v4
+        with:
+          name: expected-images
+          path: imagemorpher/morph/tests/content/expected/
