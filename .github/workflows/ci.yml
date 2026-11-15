@@ -3,8 +3,14 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'ios/**'
+      - 'docs/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - 'ios/**'
+      - 'docs/**'
 
 env:
   REGISTRY: ghcr.io

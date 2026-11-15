@@ -12,3 +12,11 @@ imagemorpher/morph/content/
 .vscode/
 imagemorpher/db.sqlite3
 *.bak*
+.DS_Store
+DerivedData/
+build/
+.build/
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+ios/MorpherCore/Package.resolved
