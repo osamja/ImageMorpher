@@ -148,6 +148,12 @@ jobs:
           key: ${{ secrets.LINODE_SSH_KEY }}
           script: |
             set -e
+            echo "=== Updating host checkout (source is bind-mounted into the containers) ==="
+            cd ~/workspace/ImageMorpher
+            git fetch origin master
+            git checkout master
+            git pull --ff-only origin master
+
             echo "=== Pulling latest image ==="
             docker pull ghcr.io/osamja/face-morpher-api:latest
             docker tag ghcr.io/osamja/face-morpher-api:latest face-morpher-api:latest
