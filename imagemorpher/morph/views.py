@@ -19,8 +19,6 @@ import uuid
 
 from .models import Morph, Upload, AnimeGan
 
-import pdb
-
 import requests
 
 # from django_dramatiq.middleware import DramatiqMiddleware

@@ -1,15 +1,8 @@
-import sys
-# morph is essentially the src root directory in this file now
-#   aka import all files with morph/<file-path>
-sys.path.insert(0, '/app/imagemorpher/morph')
-
-import matplotlib.pyplot as plt
 from skimage import img_as_ubyte
 import skimage.io as skio
 from PIL import Image
 from autocrop import Cropper
 import imageio
-import pdb
 import os
 from django.utils.text import get_valid_filename
 from django.http import HttpResponse
@@ -21,8 +14,7 @@ import io
 import uuid
 import datetime
 from morph.utils.date import getMorphDate
-import dlib
-import numpy as np
+from morph.utils.detection import detect_face_landmarks, detect_faces
 
 from morph.exceptions.CropException import CropException
 from morph.exceptions.FaceDetectException import FaceDetectException
@@ -33,16 +25,19 @@ logging.basicConfig(filename='morph/logs/morph-app-perf.log', level=logging.INFO
 # Plots the given points into vertices with edges.
 # ex. plotTri(tri, tri.points)
 def plotTri(tri):
+    import matplotlib.pyplot as plt
     pts = tri.points
     plt.triplot(pts[:,0], pts[:,1], tri.simplices.copy())
     plt.plot(pts[:,0], pts[:,1], 'o')
     plt.show()
 
 def plotImg(img):
+    import matplotlib.pyplot as plt
     plt.imshow(img)
     plt.show()
 
 def plotCorrespondingPoints(pts):
+    import matplotlib.pyplot as plt
     plt.plot(pts[0], pts[1], 'ro')
     plt.show()
 
@@ -50,6 +45,7 @@ def plotCorrespondingPointsOnImg(corresponding_pts, img):
     return
 
 def plotDelauneyTesselation(tri, points):
+    import matplotlib.pyplot as plt
     plt.triplot(points[:,0], points[:,1], tri.simplices)
     plt.plot(points[:,0], points[:,1], 'o')
     plt.show()
@@ -57,22 +53,9 @@ def plotDelauneyTesselation(tri, points):
 # This function is similar to the one in morph.py
 #  except it returns whether the face was detected or not
 def isDetectedCorrespondingPoints(img):
-  detector = dlib.get_frontal_face_detector()
-  predictor = dlib.shape_predictor('morph/utils/shape_predictor_68_face_landmarks.dat')
-
-  try:
-    face = detector(img, 1)[0]      # get first face
-  except Exception as e:
-    # ideally here, we return this in the HTTP Response
-    logging.error("Could not find corresponding points..")
-    raise FaceDetectException("Could not find corresponding points..")
-  face_detection_object = predictor(img, face)
-  face_points = face_detection_object.parts()
-  landmarks = np.array([[p.x, p.y] for p in face_points])
-
-  if (len(landmarks) == 0):
-    raise FaceDetectException("Could not find corresponding points..")
-  
+  # Model construction is cached per process; this is a cheap detection once
+  # the first request has paid for loading the 96 MB shape predictor.
+  detect_face_landmarks(img)
   return True
 
 def isImageTypeSupported(img_path):
@@ -129,8 +112,7 @@ def getDlibFallbackCrop(img_bgr):
     (profile/close-up/lighting). dlib's HOG detector is more forgiving. The
     crop is padded and resized to match autocrop's 500x500 output.
     """
-    detector = dlib.get_frontal_face_detector()
-    faces = detector(img_bgr, 1)
+    faces = detect_faces(img_bgr, 1)
     if len(faces) == 0:
         return None
 
