@@ -1,10 +1,4 @@
-import sys
-# morph is essentially the src root directory in this file now
-#   aka import all files with morph/<file-path>
-sys.path.insert(0, '/app/imagemorpher/morph')
-
 import skimage.io as skio
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
@@ -124,6 +118,8 @@ def addCornerPoints(im1, pts):
 	return pts
 
 def select_corresponding_pts(img1, num_corresponding_pts=30):
+  # Dev-only helper: keep matplotlib out of the production import path.
+  import matplotlib.pyplot as plt
   pts = []
   plt.imshow(img1)
   pts = plt.ginput(num_corresponding_pts, timeout=0, show_clicks=True)
