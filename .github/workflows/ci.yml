@@ -153,6 +153,7 @@ jobs:
             git fetch origin master
             git checkout master
             git pull --ff-only origin master
+            git -C ~/workspace/ImageMorpher log -1 --oneline
 
             echo "=== Pulling latest image ==="
             docker pull ghcr.io/osamja/face-morpher-api:latest
@@ -166,7 +167,7 @@ jobs:
             docker exec nginx_sammyjaved_proxy-face-morpher-api-1 python manage.py migrate --noinput
 
             echo "=== Verifying deployed source ==="
-            git log -1 --oneline
+            git -C ~/workspace/ImageMorpher log -1 --oneline
             docker exec nginx_sammyjaved_proxy-face-morpher-api-1 \
               python -c "from morph.morph import _warp_impl; print('warp_impl=' + _warp_impl())"
 
