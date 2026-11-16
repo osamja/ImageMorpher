@@ -161,6 +161,58 @@ class MorphAPIIntegrationTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.json()['status'], 'completed')
 
+    def test_morph_status_returns_legacy_complete_to_ios_client(self):
+        """
+        The shipped iOS app opens the result only when status == 'complete'.
+        The compatibility shim should return the legacy value to that client
+        while leaving morphUri untouched.
+        """
+        morph_id = uuid.uuid4()
+        Morph.objects.create(
+            id=morph_id,
+            status='completed',
+            first_image_ref='test1.jpg',
+            second_image_ref='test2.jpg',
+            morphed_image_ref='https://pyaar.ai/facemorphs/morph.gif',
+            morphed_image_filepath='/path/to/morph.gif',
+        )
+
+        url = reverse('morph_status', kwargs={'morph_uuid': morph_id})
+        response = self.client.get(
+            url,
+            HTTP_USER_AGENT='MyMorph/1 CFNetwork/3896.100.1.2.1 Darwin/27.0.0',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'complete')
+        self.assertEqual(
+            response.json()['morphUri'],
+            'https://pyaar.ai/facemorphs/morph.gif',
+        )
+
+    def test_morph_status_keeps_completed_for_non_ios_clients(self):
+        """
+        Non-mobile consumers keep the corrected 'completed' status.
+        """
+        morph_id = uuid.uuid4()
+        Morph.objects.create(
+            id=morph_id,
+            status='completed',
+            first_image_ref='test1.jpg',
+            second_image_ref='test2.jpg',
+            morphed_image_ref='https://pyaar.ai/facemorphs/morph.gif',
+            morphed_image_filepath='/path/to/morph.gif',
+        )
+
+        url = reverse('morph_status', kwargs={'morph_uuid': morph_id})
+        response = self.client.get(
+            url,
+            HTTP_USER_AGENT='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'completed')
+
     def test_morph_model_creation_with_defaults(self):
         """
         Test that Morph model creates correctly with default values
