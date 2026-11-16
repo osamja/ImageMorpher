@@ -355,6 +355,20 @@ def uploadMorphImage(request):
     upload.save()
     return Response(cropped_img_path)
 
+def _status_for_client(request, status_value):
+    """TEMPORARY compatibility shim for the shipped iOS app.
+
+    The app gates opening the result on ``status === 'complete'`` while the
+    model/status API uses ``'completed'``. Return the legacy value to the
+    mobile client only, so other API consumers keep the corrected contract.
+    Remove once the app update (accepting both values) is live.
+    """
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    if status_value == 'completed' and ('CFNetwork' in user_agent or 'MyMorph' in user_agent):
+        return 'complete'
+    return status_value
+
+
 def morph_status(request, morph_uuid):
     try:
         morph = Morph.objects.get(pk=morph_uuid)
@@ -365,7 +379,7 @@ def morph_status(request, morph_uuid):
     protocol = 'https' if request.is_secure() else 'http'
 
     status_data = {
-        'status': morph.status,
+        'status': _status_for_client(request, morph.status),
         'morphUri': morph.morphed_image_ref,
         'progress': morph.progress,
         'intermediateImages': [
