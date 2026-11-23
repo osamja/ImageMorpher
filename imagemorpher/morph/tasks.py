@@ -5,6 +5,7 @@ import uuid
 
 import dramatiq
 import requests
+from django.utils import timezone
 from PIL import Image
 
 from .morph import getDetectedCorrespondingPoints, morph
@@ -29,6 +30,7 @@ def processMorph(morph_id_str, push_token=None):
     morph_filepath = morph_instance.morphed_image_filepath
     duration = morph_instance.duration
 
+    queue_wait_seconds = (timezone.now() - morph_instance.created_at).total_seconds()
     morph_instance.status = 'processing'
     morph_instance.progress = 0
     morph_instance.save()
@@ -83,9 +85,10 @@ def processMorph(morph_id_str, push_token=None):
             _send_push_notification(push_token, morph_uri)
 
             logger.info(
-                'morph completed id=%s frames=%s detection=%.3fs total=%.3fs',
+                'morph completed id=%s frames=%s queue_wait=%.3fs detection=%.3fs total=%.3fs',
                 morph_id_str,
                 total_frames,
+                queue_wait_seconds,
                 detection_seconds,
                 time.perf_counter() - started_at,
             )
@@ -107,8 +110,9 @@ def processMorph(morph_id_str, push_token=None):
             _send_push_notification(push_token, morph_uri)
 
             logger.info(
-                'morph completed id=%s frames=1 detection=%.3fs total=%.3fs',
+                'morph completed id=%s frames=1 queue_wait=%.3fs detection=%.3fs total=%.3fs',
                 morph_id_str,
+                queue_wait_seconds,
                 detection_seconds,
                 time.perf_counter() - started_at,
             )

@@ -77,4 +77,31 @@ so the real before/after gap is larger than the warp-only table.
 
 End-to-end `processMorph` for 101 frames, including the 101 intermediate JPEG
 writes and GIF encoding, took **12.76 s** in the same container and produced a
-6.9 MB GIF. Record updated numbers here when running on the worker hardware.
+6.9 MB GIF.
+
+### Production worker baseline
+
+On November 22, 2026, the deployed Linode worker container ran the vectorized
+benchmark with three repetitions per frame count. Setup took 0.135 s for
+cropping and 1.652 s for landmark detection. Peak RSS was 243.9 MB.
+
+| frames | mean warp time | minimum warp time |
+|---:|---:|---:|
+| 1 | 0.096 s | 0.087 s |
+| 6 | 0.519 s | 0.497 s |
+| 101 | 8.933 s | 8.635 s |
+
+The production smoke job took approximately 0.49 s from creation to
+processing, 2.30 s in the worker, and 3.74 s from client submission through
+GIF decoding. The queue estimate uses the job creation timestamp and the
+worker's logged completion time and processing duration.
+
+The deploy smoke test submits a three-frame GIF job and prints its ID and
+client-observed time from submission through image decoding. Find that ID in the
+worker logs to see `queue_wait` (job creation to processing start, including
+enqueue overhead) and `total` (worker processing time). To run the smoke test
+manually with Requests and Pillow installed:
+
+```bash
+python scripts/smoke_morph.py https://pyaar.ai
+```

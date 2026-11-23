@@ -177,13 +177,16 @@ jobs:
   health-check:
     needs: deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Verify API health
-        run: |
-          sleep 3
-          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://pyaar.ai/morph/)
-          if [ "$STATUS" != "200" ]; then
-            echo "Health check failed: HTTP $STATUS"
-            exit 1
-          fi
-          echo "Health check passed: HTTP $STATUS"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install smoke test dependencies
+        run: python -m pip install requests Pillow
+
+      - name: Verify deployed morph pipeline
+        run: python scripts/smoke_morph.py https://pyaar.ai
