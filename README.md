@@ -90,6 +90,16 @@ docker exec nginx_sammyjaved_proxy-face-morpher-api-1 \
     python manage.py migrate
 ```
 
+### Cloud image retention
+
+The Linode host runs the following job daily at midnight in Sammy's crontab. It removes uploaded and generated image files from the shared Docker volume once their last modification is more than 30 days old.
+
+```cron
+0 0 * * * /usr/bin/docker exec nginx_sammyjaved_proxy-face-morpher-api-1 python /app/morph/utils/auto_delete.py --delete >> /home/sammy/imagemorpher-retention.log 2>&1
+```
+
+Run the same Docker command without `--delete` to preview the eligible file count.
+
 ## Debug a Container
 
 ```bash

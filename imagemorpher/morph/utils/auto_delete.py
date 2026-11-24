@@ -1,43 +1,39 @@
-# The purpose of this file is to automatically delete user generated content older than a given time.
-# This python file should be periodically executed through a cron job.
+"""Remove cloud image uploads and morphs after 30 days."""
 
-# CRON tab that runs this script every 24 hours
-# crontab -e (for initiating crontab file)
-# crontab -l for viewing cron tasks
-# 0 0 * * * /usr/bin/python /app/imagemorpher/morph/utils/auto_delete.py >> /app/imagemorpher/morph/logs/auto-delete-cron.log 2>&1
-
-"""
-Algorithm:
-For each file in our directory of saved morphed imgs
-    if file older than 30 days
-        delete file
-"""
-
-import os
+import argparse
+from pathlib import Path
+import stat
 import time
-from datetime import timedelta, datetime, date
 
-def get_date_x_days_ago(x_days_ago, date_from=None):
-    return datetime.strptime(date_from, '%Y-%m-%d').date() - timedelta(x_days_ago) if date_from else date.today()-timedelta(x_days_ago)
 
-# change to directory where morphed images are stored
-path_of_saved_morphs = '/app/imagemorpher/morph/content/temp_morphed_images'
-os.chdir(path_of_saved_morphs)
+IMAGE_DIRECTORY = Path(__file__).resolve().parents[1] / "content" / "temp_morphed_images"
+RETENTION_SECONDS = 30 * 24 * 60 * 60
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".gif", ".png", ".heic", ".heif", ".webp"}
 
-# get list of all filenames
-morphed_filenames = os.listdir(path_of_saved_morphs)
 
-# get current year-month
-today = time.strftime("%Y-%m-%d")
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--delete", action="store_true", help="Delete eligible files")
+    args = parser.parse_args()
+    cutoff = time.time() - RETENTION_SECONDS
+    count = 0
 
-# get date 30 days ago
-previous_date = datetime.strftime(get_date_x_days_ago(x_days_ago=30, date_from=today), "%Y-%m-%d")
+    for path in IMAGE_DIRECTORY.iterdir():
+        if path.suffix.lower() not in IMAGE_SUFFIXES:
+            continue
+        try:
+            info = path.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_mtime >= cutoff:
+                continue
+            if args.delete:
+                path.unlink()
+            count += 1
+        except FileNotFoundError:
+            continue
 
-for morphed_filename in morphed_filenames:
-    try:
-        morphed_file_date = datetime.strptime(morphed_filename[:10], "%Y-%m-%d")
-        previous_date_obj = datetime.strptime(previous_date, "%Y-%m-%d")
-        if morphed_file_date < previous_date_obj:
-            os.remove(morphed_filename)
-    except ValueError:
-        continue
+    action = "Deleted" if args.delete else "Eligible for deletion:"
+    print(f"{action} {count} image files older than 30 days.")
+
+
+if __name__ == "__main__":
+    main()
